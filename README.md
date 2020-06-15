@@ -1,4 +1,4 @@
-# rooster
+# Rooster
 A simple web server with Rust
 
 # Installation
