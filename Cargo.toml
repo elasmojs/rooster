@@ -1,0 +1,16 @@
+[package]
+name = "rooster"
+version = "0.1.0"
+authors = ["VIGNESH"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1.4.0"
+dotproperties = "0.1.0"
+hyper = "0.13.6"
+tokio = { version = "0.2", features = ["full"] }
+futures-util = "0.3.5"
+hyper-staticfile = "0.5.3"
+webbrowser = "0.5.4"
