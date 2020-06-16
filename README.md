@@ -6,7 +6,7 @@ A personal static web server with Rust. This is an experimental project created 
 ## Installation
 Just copy rooster executable to your web root folder and run!
 
-- Root Folder
+- Your Web Root Folder
   - index.html
   - rooster.exe
 
