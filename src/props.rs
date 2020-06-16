@@ -13,7 +13,7 @@ lazy_static! {
                 
             }
         };
-        mapped
+        return mapped;
     };
 }
 

@@ -1,5 +1,5 @@
 # Rooster
-A simple web server with Rust
+A personal static web server with Rust
 
 # Installation
-Just copy rooster executable to your root folder and run!
+Just copy rooster executable to your web root folder and run!
