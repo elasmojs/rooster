@@ -1,7 +1,7 @@
-<img src="./webroot/rooster.png" alt="Rooster Personal Web Server" width="128"/>
+<img src="./webroot/rooster.png" href="http://icons8.com/" alt="Rooster Personal Web Server" width="128"/>
 
 # Rooster
-A personal static web server with Rust
+A personal static web server with Rust. This is an experimental project created as an attempt to scratch a personal itch and learn Rust.
 
 ## Installation
 Just copy rooster executable to your web root folder and run!
