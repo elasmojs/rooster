@@ -1,4 +1,4 @@
-![Rooster](/webroot/rooster.png =128x128)
+<img src="./webroot/rooster.png" alt="Rooster Personal Web Server" width="128"/>
 
 # Rooster
 A personal static web server with Rust
