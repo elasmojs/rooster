@@ -1,4 +1,4 @@
-//#![windows_subsystem = "windows"]
+#![windows_subsystem = "windows"]
 
 use std::io::Error as IoError;
 use std::{net::SocketAddr, path::Path};
@@ -53,7 +53,7 @@ async fn main() {
         future::ok::<_, hyper::Error>(service_fn(move |req| process_request(req, remote_addr_str.to_string(), static_.clone(), web_default)))
     });
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port_num));
+    let addr = SocketAddr::from(([0, 0, 0, 0], port_num));
     let server = Server::bind(&addr).serve(service);
     let graceful = server.with_graceful_shutdown(shutdown_signal());
 
