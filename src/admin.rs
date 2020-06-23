@@ -7,10 +7,17 @@ use hyper::{Response, Body, header::HeaderValue, StatusCode};
 
 mod resources;
 
-pub async fn process(req_path: &str) -> Result<Response<Body>, IoError>{
+pub async fn process(req_path: &str, remote_add_str: String) -> Result<Response<Body>, IoError>{
     match req_path{
         "/_rooster/shutdown" => {
-            return shutdown().await;
+            //Allow shutdown only when issued from the localhost
+            if !remote_add_str.contains("127.0.0.1"){
+                let mut response = Response::default();
+                *response.status_mut() = StatusCode::FORBIDDEN;
+                return Ok(response);
+            }else{
+                return shutdown().await;
+            }
         },
         "/_rooster/about" => {
             return about().await;

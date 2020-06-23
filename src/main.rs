@@ -1,4 +1,4 @@
-#![windows_subsystem = "windows"]
+//#![windows_subsystem = "windows"]
 
 use std::io::Error as IoError;
 use std::{net::SocketAddr, path::Path};
@@ -8,11 +8,12 @@ use futures_util::future;
 use hyper::{Body, Request, Response, Server};
 use hyper::service::{make_service_fn, service_fn};
 use hyper_staticfile::Static;
+use hyper::server::conn::AddrStream;
 
 mod props;
 mod admin;
 
-async fn process_request(req: Request<Body>, static_:Static, web_default: &str) -> Result<Response<Body>, IoError> {
+async fn process_request(req: Request<Body>, remote_add_str:String, static_:Static, web_default: &str) -> Result<Response<Body>, IoError> {
     let default_uri = format!("/{}", web_default);
     let req_path = req.uri().path();
     match req_path {
@@ -23,7 +24,7 @@ async fn process_request(req: Request<Body>, static_:Static, web_default: &str) 
             return static_.clone().serve(request).await;
         },
         req_path if req_path.contains("/_rooster") =>{
-            return admin::process(req_path).await;
+            return admin::process(req_path, remote_add_str).await;
         },
         _ => {
             return static_.clone().serve(req).await;
@@ -46,9 +47,10 @@ async fn main() {
 
     let static_ = Static::new(Path::new(web_root));
 
-    let service = make_service_fn(|_| {
+    let service = make_service_fn(|socket: &AddrStream| {
+        let remote_addr_str = Box::new(socket.remote_addr().ip().to_string());
         let static_ = static_.clone();
-        future::ok::<_, hyper::Error>(service_fn(move |req| process_request(req, static_.clone(), web_default)))
+        future::ok::<_, hyper::Error>(service_fn(move |req| process_request(req, remote_addr_str.to_string(), static_.clone(), web_default)))
     });
 
     let addr = SocketAddr::from(([127, 0, 0, 1], port_num));

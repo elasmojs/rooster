@@ -27,4 +27,4 @@ Rooster is windowless and currently does not also support system tray. All admin
 A small about Rooster page
 
 ### /_rooster/shutdown
-Shuts the server down. [TODO: check for local host origin to permit shutdown]
+Shuts the server down. (Only works when request originates from the localhost)
