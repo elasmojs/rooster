@@ -1,6 +1,6 @@
 [package]
 name = "rooster"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["elasmojs"]
 edition = "2018"
 
@@ -14,3 +14,4 @@ tokio = { version = "0.2", features = ["full"] }
 futures-util = "0.3.5"
 hyper-staticfile = "0.5.3"
 webbrowser = "0.5.4"
+rhai = "0.15.1"

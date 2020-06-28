@@ -5,13 +5,14 @@ use std::io::Error as IoError;
 
 use hyper::{Response, Body, header::HeaderValue, StatusCode};
 
-mod resources;
+use crate::resources;
+use crate::props::Props;
 
-pub async fn process(req_path: &str, remote_add_str: String) -> Result<Response<Body>, IoError>{
+pub async fn process(req_path: &str, props: Props) -> Result<Response<Body>, IoError>{
     match req_path{
         "/_rooster/shutdown" => {
             //Allow shutdown only when issued from the localhost
-            if !remote_add_str.contains("127.0.0.1"){
+            if !props.remote_addr.contains("127.0.0.1"){
                 let mut response = Response::default();
                 *response.status_mut() = StatusCode::FORBIDDEN;
                 return Ok(response);
@@ -32,7 +33,7 @@ pub async fn process(req_path: &str, remote_add_str: String) -> Result<Response<
 
 async fn shutdown() -> Result<Response<Body>, IoError>{
     let shutdown_resp = resources::get("shutdown.html");
-    let mut response = Response::new(Body::from(shutdown_resp.as_bytes()));
+    let mut response = Response::new(Body::from(shutdown_resp));
     response.headers_mut().insert("Cache-Control", HeaderValue::from_static("no-cache"));
     exit_rooster().await;
     return Ok(response);
