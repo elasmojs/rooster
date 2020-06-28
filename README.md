@@ -35,3 +35,6 @@ A small about Rooster page
 
 ### /_rooster/shutdown
 Shuts the server down. (Allows requests orginating from localhost only)
+
+## Upcoming
+- Script support
