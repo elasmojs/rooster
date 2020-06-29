@@ -3,7 +3,7 @@ use std::io::{Error as IoError, Read};
 
 use hyper::{Body, Request, Response, header::HeaderValue, StatusCode};
 
-use rhai::{Engine, OptimizationLevel, Scope, Dynamic};
+use rhai::{Engine, OptimizationLevel, Scope, Dynamic, Map};
 
 use crate::props::Props;
 
@@ -15,6 +15,7 @@ pub fn process(req: Request<Body>, props: Props) -> Result<Response<Body>, IoErr
     //TODO: process script
     
     let req_path = req.uri().path();
+    
     let mut script_file = match File::open(&(props.web_root.clone() + req_path + SCRIPT_EXTN)) {
         Err(_err) => {
             let mut response = Response::default();
@@ -35,6 +36,12 @@ pub fn process(req: Request<Body>, props: Props) -> Result<Response<Body>, IoErr
 
     #[cfg(not(feature = "no_optimize"))]
     engine.set_optimization_level(OptimizationLevel::Full);
+    engine.set_max_expr_depths(500, 500);
+    engine.set_max_call_levels(500);
+    engine.set_max_modules(1000);
+    engine.set_max_map_size(1500);
+    engine.set_max_array_size(1500);
+    engine.set_max_string_size(5000);  
 
     let ast = engine.compile(&contents);
     if ast.is_err() {
@@ -56,9 +63,25 @@ pub fn process(req: Request<Body>, props: Props) -> Result<Response<Body>, IoErr
     engine.register_get("remote_addr", Props::get_net_port);
     */
 
+    let mut header_keys = req.headers().keys();
+    let mut headers_map = Map::new();
+    for x in 0..header_keys.len() {
+        let key:String = match header_keys.nth(x){
+            Some(k) => k.to_string(),
+            None => String::from("")
+        };
+        let key_ = key.clone();
+        if key.len() > 0 {
+            let value:String = match req.headers().get(key){
+                Some(v) => String::from(v.to_str().unwrap()),
+                None => String::from("")
+            };
+            headers_map.insert(key_.clone(), Dynamic::from(value));
+        }
+    }
+
     let mut scope = Scope::new();
-    scope.push("testvar", String::from("Ha ha!"));
-    //scope.push("props", props);
+    scope.push("headers", headers_map);
     
     let result:Dynamic = match engine.call_fn(&mut scope, &(ast.unwrap()), SCRIPT_MAIN, () ){
         Ok(result) => {

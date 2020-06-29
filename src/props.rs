@@ -19,24 +19,6 @@ impl Props{
             remote_addr: String::from("")
         };
     }
-
-    /*
-    pub fn get_net_port(&mut self) -> i32 {
-        self.net_port.clone()
-    }
-
-    pub fn get_web_root(&mut self) -> String {
-        self.web_root.clone()
-    }
-
-    pub fn get_web_default(&mut self) -> String {
-        self.web_default.clone()
-    }
-
-    pub fn get_remote_addr(&mut self) -> String {
-        self.remote_addr.clone()
-    }
-    */
 }
 
 lazy_static! {
