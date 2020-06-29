@@ -38,3 +38,4 @@ Shuts the server down. (Allows requests orginating from localhost only)
 
 ## Upcoming
 - Script support
+- SSL support
