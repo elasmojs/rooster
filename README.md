@@ -39,9 +39,9 @@ Shuts the server down. (Allows requests orginating from localhost only)
 ## Performance
 10K user test with Locust running on same 16GB RAM laptop
 
-<img src="./performance/rooster-locust-perf-10kusers.PNG" width="400"/>
+<img src="./performance/rooster-locust-perf-10kusers.PNG" width="640"/>
 
-<img src="./performance/rooster-locust-perf-10kusers-c1.PNG" width="400"/>
+<img src="./performance/rooster-locust-perf-10kusers-c1.PNG" width="640"/>
 
 ## Upcoming
 - Script support
