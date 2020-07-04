@@ -45,14 +45,13 @@ async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, Io
 
     #[cfg(not(feature = "no_optimize"))]
     engine.set_optimization_level(OptimizationLevel::Full);
-    engine.set_max_expr_depths(500, 500);
-    engine.set_max_call_levels(500);
-    engine.set_max_modules(1000);
-    engine.set_max_map_size(1500);
-    engine.set_max_array_size(1500);
-    engine.set_max_string_size(5000);
-    
-    
+    engine.set_max_expr_depths(props.max_expr_depths_global, props.max_expr_depths_local);
+    engine.set_max_call_levels(props.max_call_levels);
+    engine.set_max_modules(props.max_modules);
+    engine.set_max_map_size(props.max_map_size);
+    engine.set_max_array_size(props.max_array_size);
+    engine.set_max_string_size(props.max_string_size);
+
     let ast = engine.compile(&contents);
     if ast.is_err() {
         println!("{:?}", ast.unwrap_err());
