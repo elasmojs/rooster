@@ -3,6 +3,8 @@ use std::time::Duration;
 use std::process::exit;
 use std::io::Error as IoError;
 
+use::log::*;
+
 use hyper::{Response, Body, header::HeaderValue, StatusCode};
 
 use crate::resources;
@@ -12,18 +14,23 @@ pub async fn process(req_path: &str, props: Props) -> Result<Response<Body>, IoE
     match req_path{
         "/_rooster/shutdown" => {
             //Allow shutdown only when issued from the localhost
+            info!("Serving shut down request");
             if !props.remote_addr.contains("127.0.0.1"){
+                error!("Illegal shutdown request from: {}", props.remote_addr);
                 let mut response = Response::default();
                 *response.status_mut() = StatusCode::FORBIDDEN;
                 return Ok(response);
             }else{
+                info!("Shutting down...bye! bye!");
                 return shutdown().await;
             }
         },
         "/_rooster/about" => {
+            info!("Serving about request");
             return about().await;
         },
         _ => {
+            error!("Illegal request to admin route: {}", req_path);
             let mut response = Response::default();
             *response.status_mut() = StatusCode::NOT_FOUND;
             return Ok(response);

@@ -3,6 +3,8 @@ use std::io::{Error as IoError, Read};
 use std::str;
 use std::collections::HashMap;
 
+use log::*;
+
 use hyper::{Body, Request, Response, header::HeaderValue, StatusCode, };
 
 use rhai::{Engine, OptimizationLevel, Scope, Dynamic, Map};
@@ -26,7 +28,8 @@ async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, Io
     //TODO: process script
     
     let mut script_file = match File::open(&(props.web_root.clone() + &req_data.path.clone() + SCRIPT_EXTN)) {
-        Err(_err) => {
+        Err(err) => {
+            error!("Could not open script file for path: {}, Error - {}", req_data.path, err);
             let mut response = Response::default();
             *response.status_mut() = StatusCode::NOT_FOUND;
             return Ok(response);
@@ -36,8 +39,8 @@ async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, Io
 
     let mut contents = String::new();
 
-    if let Err(_err) = script_file.read_to_string(&mut contents) {
-        println!("{:?}", _err);
+    if let Err(err) = script_file.read_to_string(&mut contents) {
+        error!("Could not read script file for path: {}, Error - {}", req_data.path, err);
         return get_server_error_response();
     }
 
@@ -54,14 +57,15 @@ async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, Io
 
     let ast = engine.compile(&contents);
     if ast.is_err() {
-        println!("{:?}", ast.unwrap_err());
+        error!("Could not compile script file for path: {}, Error - {}", req_data.path, ast.err().unwrap());
         return get_server_error_response()
     }
 
     let mut request_map = Map::new();
 
-    let headers_map = get_headers(req_data.headers);
+    let headers_map = get_headers(req_data.headers.clone());
     
+    request_map.insert(String::from("remote_addr"), Dynamic::from(props.remote_addr.clone()));
     request_map.insert(String::from("method"), Dynamic::from(req_data.method.clone()));
     request_map.insert(String::from("path"), Dynamic::from(req_data.path.clone()));
     request_map.insert(String::from("query"), Dynamic::from(req_data.query.clone()));
@@ -70,25 +74,25 @@ async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, Io
     request_map.insert(String::from("is_multipart"), Dynamic::from(req_data.is_multipart));
     
     let mut scope = Scope::new();
-    scope.push("request", request_map);
+    scope.push("request", request_map.clone());
     
+    debug!("Request: \r\n{}", get_request_data(req_data.clone()));
     let result:Dynamic = match engine.call_fn(&mut scope, &(ast.unwrap()), SCRIPT_MAIN, () ){
         Ok(result) => {
             result
         },
-        Err(_err) => {
-            println!("{:?}", _err);
+        Err(err) => {
+            error!("Error in script processing for path: {}, Error - {}", req_data.path, err);
             return get_server_error_response()
         }
     };
 
-    let result_ = result.clone();
     let result_str:String = match result.try_cast::<String>(){
         Some(result_str) => {
             result_str
         },
         None => {
-            println!("Error in return value: {:?}", result_);
+            error!("Unexpected response from script file for path: {}", req_data.path);
             return get_server_error_response()
         }
     };
@@ -104,6 +108,16 @@ fn get_headers(headers:HashMap<String, String>) -> Map{
         headers_map.insert(key.clone(), Dynamic::from(value));
     }
     return headers_map;
+}
+
+fn get_request_data(req:RequestData) -> String{
+    let mut req_data_str = format!("{} {}?{}\r\n", req.method, req.path, req.query);
+    let mut headers_str = String::from("");
+    for (key, value) in req.headers.clone().iter(){
+        headers_str = format!("{}{}:{}\r\n", headers_str, key, value);
+    }
+    req_data_str = format!("{}{}\r\n{}\r\n\r\nMultipart: {}", req_data_str, headers_str, req.body, req.is_multipart);
+    return req_data_str;
 }
 
 fn get_server_error_response() -> Result<Response<Body>, IoError>{

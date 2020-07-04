@@ -7,6 +7,8 @@ use std::{net::SocketAddr, path::Path};
 use std::collections::HashMap;
 use std::str;
 
+use log::*;
+
 use futures_util::future;
 use futures_util::stream::TryStreamExt;
 
@@ -15,6 +17,7 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper_staticfile::Static;
 use hyper::server::conn::AddrStream;
 
+mod logger;
 mod strings;
 mod props;
 mod resources;
@@ -32,6 +35,7 @@ const DOT:&str = ".";
 const CONTENT_TYPE:&str = "content-type";
 const MULTI_PART_CONTENT_TYPE:&str = "multipart/form-data";
 
+#[derive(Clone)]
 pub struct RequestData{
     pub method: String,
     pub path: String,
@@ -63,6 +67,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         Some(q) => String::from(q),
         None => String::from("")
     };
+
     let last_slash_idx = _last_index_of(String::from(req_path), F_SLASH) as usize;
     let file_name = &req_path[last_slash_idx+1..];
     let not_file = _last_index_of(String::from(file_name), DOT) == -1;
@@ -89,6 +94,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         if req_path.to_lowercase().contains(ADMIN_ROUTE){
             is_admin = true;
         }else if req_path.to_lowercase().contains(SCRIPT_EXTN){
+            error!("Error serving request for path: {}", req_path);
             let mut response = Response::default();
             *response.status_mut() = StatusCode::FORBIDDEN;
             return Ok(response);
@@ -98,6 +104,8 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
     match req_path{
         req_path if is_folder =>{
             //process folders
+
+            info!("Serving request for folder: {}", req_path);
             let default_uri;
             if _last_char(String::from(req_path)).contains(F_SLASH){
                 default_uri = format!("{}{}", req_path, props.web_default);
@@ -112,10 +120,12 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         },
         req_path if is_admin =>{
             //process rooster admin
+            info!("Serving admin request for path: {}", req_path);
             return admin::process(req_path, props).await;
         },
         req_path if is_script =>{
             //process script
+            info!("Serving script request for path: {}", req_path);
             let method = req.method().clone().to_string();
             let headers = get_headers(req.headers().clone()).await;
             let path = String::from(req_path);
@@ -145,6 +155,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                     body.clone(),
                     false
                 );
+                info!("Serving script request for path: {}", req_path);
                 return scripts::process_normal(req_data, props).await;
             }else{
                 let req_data = RequestData::new(
@@ -155,10 +166,12 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                     body.clone(),
                     true
                 );
+                info!("Serving multipart script request for path: {}", req_path);
                 return scripts::process_multi_part(req_data, props, req).await;
             } 
         },        
         _ => {
+                info!("Serving file request for path: {}", req_path);
                 return static_.clone().serve(req).await;
         }
     }
@@ -209,6 +222,8 @@ async fn shutdown_signal() {
 #[tokio::main]
 async fn main() {
     let mut props = props::get_props();
+    logger::init_log(props.clone());
+
     let net_port = props.net_port.clone();
 
     let static_ = Static::new(Path::new(&props.web_root));
@@ -223,6 +238,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], net_port as u16));
     let server = Server::bind(&addr).serve(service);
     let graceful = server.with_graceful_shutdown(shutdown_signal());
+    info!("Rooster server started at => http://localhost:{}", net_port);
 
     let website_url = format!("http://localhost:{}", net_port);
     let _browser_result = webbrowser::open(&website_url);
