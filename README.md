@@ -45,5 +45,4 @@ Shuts the server down. (Allows requests orginating from localhost only)
 
 ## Upcoming
 - Script support
-- Logging
 - SSL support
