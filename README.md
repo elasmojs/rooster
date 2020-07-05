@@ -45,4 +45,6 @@ Shuts the server down. (Allows requests orginating from localhost only)
 
 ## Upcoming
 - Script support
+  - Script APIs roadmap
 - SSL support
+- Daemon/Windows Service support
