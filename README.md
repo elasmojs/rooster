@@ -1,7 +1,7 @@
 <img src="./webroot/rooster.png" href="http://icons8.com/" alt="Rooster Personal Web Server" width="128"/>
 
 # Rooster
-A personal static web server with Rust. This is an experimental project created as an attempt to scratch a personal itch. It is currently a single executable of about ~3 MB in size.
+A personal web server with Rust. This is an experimental project created as an attempt to scratch a personal itch but with growing ambitions. It is currently a single executable of about ~3 MB in size.
 
 ## Downloads
 [Windows 32 bit](./dist/rooster-win32.exe)
