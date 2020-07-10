@@ -13,8 +13,10 @@ bytes = "0.5.5"
 lazy_static = "1.4.0"
 dotproperties = "0.1.0"
 hyper = "0.13.6"
+hyper-staticfile = "0.5.3"
 tokio = { version = "0.2", features = ["full"] }
 futures-util = "0.3.5"
-hyper-staticfile = "0.5.3"
-webbrowser = "0.5.4"
+multipart = "0.17.0"
 rhai = "0.15.1"
+webbrowser = "0.5.4"
+

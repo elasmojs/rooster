@@ -5,27 +5,29 @@ use std::collections::HashMap;
 
 use log::*;
 
-use hyper::{Body, Request, Response, header::HeaderValue, StatusCode, };
+use hyper::{Body, Response, header::HeaderValue, StatusCode, };
 
 use rhai::{Engine, OptimizationLevel, Scope, Dynamic, Map};
 
 use crate::props::Props;
 use crate::RequestData;
+//use crate::MPFile;
 
 const SCRIPT_EXTN:&str = ".rhai";
 const SCRIPT_MAIN:&str = "main";
 const SERVER_ERROR:u16 = 500;
 
-pub async fn process_multi_part(req_data:RequestData, props: Props, _req:Request<Body>) -> Result<Response<Body>, IoError>{
-    return process(req_data, props).await;
-}
-
-pub async fn process_normal(req_data:RequestData, props: Props) -> Result<Response<Body>, IoError>{
-    return process(req_data, props).await;
-}
-
-async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, IoError>{
+pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, IoError>{
     //TODO: process script
+
+    if req_data.is_multipart{
+        for (key, val) in req_data.fields.clone(){
+            info!("Field: {} - {}", key, val);
+        }
+        for (key, val) in req_data.files.clone(){
+            info!("File: {} - {} - {}", key, val.file_name, val.content_type);
+        }
+    }
     
     let mut script_file = match File::open(&(props.web_root.clone() + &req_data.path.clone() + SCRIPT_EXTN)) {
         Err(err) => {

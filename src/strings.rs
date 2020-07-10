@@ -1,23 +1,31 @@
-pub fn _index_of(str:String, match_str:&str) -> i32{
-    let str_idx = match str.find(match_str){
-        Some(idx) => idx as i32,
-        None => i32::from(-1)
-    };
-    return str_idx;
+pub trait StringUtils{
+    fn index_of(&self, match_str:&str) -> i32;
+    fn last_index_of(&self, match_str:&str) -> i32;
+    fn last_char(&self) -> String;
 }
 
-pub fn _last_index_of(str:String, match_str:&str) -> i32{
-    let str_idx = match str.rfind(match_str){
-        Some(idx) => idx as i32,
-        None => i32::from(-1)
-    };
-    return str_idx;
-}
+impl StringUtils for String{
+    fn index_of(&self, match_str:&str) -> i32{
+        let str_idx = match self.find(match_str){
+            Some(idx) => idx as i32,
+            None => i32::from(-1)
+        };
+        return str_idx;
+    }
 
-pub fn _last_char(str:String) -> String{
-    let last_char = match str.get(str.chars().count()..){
-        Some(char) => char,
-        None => ""
-    };
-    return last_char.to_string();
+    fn last_index_of(&self, match_str:&str) -> i32{
+        let str_idx = match self.rfind(match_str){
+            Some(idx) => idx as i32,
+            None => i32::from(-1)
+        };
+        return str_idx;
+    }
+
+    fn last_char(&self) -> String{
+        let last_char = match self.get(self.chars().count()..){
+            Some(char) => char,
+            None => ""
+        };
+        return last_char.to_string();
+    }
 }

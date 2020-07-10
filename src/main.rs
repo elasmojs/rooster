@@ -2,7 +2,7 @@
 
 use std::clone::Clone;
 use std::fs::{metadata};
-use std::io::Error as IoError;
+use std::io::{Cursor, Read, Error as IoError};
 use std::{net::SocketAddr, path::Path};
 use std::collections::HashMap;
 use std::str;
@@ -17,6 +17,8 @@ use hyper::service::{make_service_fn, service_fn};
 use hyper_staticfile::Static;
 use hyper::server::conn::AddrStream;
 
+use multipart::server::{Multipart};
+
 mod logger;
 mod strings;
 mod props;
@@ -25,7 +27,7 @@ mod admin;
 mod scripts;
 
 
-use strings::{_last_index_of, _last_char};
+use strings::StringUtils;
 use props::Props;
 
 const ADMIN_ROUTE:&str = "/_rooster";
@@ -36,13 +38,34 @@ const CONTENT_TYPE:&str = "content-type";
 const MULTI_PART_CONTENT_TYPE:&str = "multipart/form-data";
 
 #[derive(Clone)]
+pub struct MPFile{
+    pub name: String,
+    pub file_name: String,
+    pub file_content: Vec<u8>,
+    pub content_type: String
+}
+
+impl MPFile{
+    fn new(name: String, file_name: String, file_content: Vec<u8>, content_type: String) -> MPFile{
+        return MPFile{
+            name: name,
+            file_name: file_name,
+            file_content: file_content,
+            content_type: content_type
+        };
+    }
+}
+
+#[derive(Clone)]
 pub struct RequestData{
     pub method: String,
     pub path: String,
     pub query: String,
     pub headers: HashMap<String, String>,
     pub body: String,
-    pub is_multipart: bool
+    pub is_multipart: bool,
+    pub fields: HashMap<String, String>,
+    pub files: HashMap<String, MPFile>
 }
 
 impl RequestData{
@@ -53,7 +76,9 @@ impl RequestData{
             query: query,
             headers: headers,
             body: body,
-            is_multipart: is_multipart
+            is_multipart: is_multipart,
+            fields: HashMap::new(),
+            files: HashMap::new(),
         };
     }
 }
@@ -68,9 +93,9 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         None => String::from("")
     };
 
-    let last_slash_idx = _last_index_of(String::from(req_path), F_SLASH) as usize;
+    let last_slash_idx = String::from(req_path).last_index_of(F_SLASH) as usize;
     let file_name = &req_path[last_slash_idx+1..];
-    let not_file = _last_index_of(String::from(file_name), DOT) == -1;
+    let not_file = String::from(file_name).last_index_of(DOT) == -1;
     let mut is_script = false;
     let mut is_folder = false;
     let mut is_admin = false; 
@@ -107,7 +132,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
 
             info!("Serving request for folder: {}", req_path);
             let default_uri;
-            if _last_char(String::from(req_path)).contains(F_SLASH){
+            if String::from(req_path).last_char().contains(F_SLASH){
                 default_uri = format!("{}{}", req_path, props.web_default);
             }else{
                 default_uri = format!("{}/{}", req_path, props.web_default);
@@ -130,8 +155,6 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             let headers = get_headers(req.headers().clone()).await;
             let path = String::from(req_path);
 
-            let mut body = String::from("");
-            
             let mut is_multipart = false;
             let has_content_type = headers.contains_key(CONTENT_TYPE);
             if has_content_type{
@@ -145,30 +168,22 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                 }
             }
 
+            let mut req_data = RequestData::new(
+                method.clone(),
+                path.clone(),
+                query.clone(),
+                headers.clone(),
+                String::from(""),
+                false
+            );
+            info!("Serving script request for path: {}", req_path);
             if !is_multipart{
-                body = get_body_str(req).await;
-                let req_data = RequestData::new(
-                    method.clone(),
-                    path.clone(),
-                    query.clone(),
-                    headers.clone(),
-                    body.clone(),
-                    false
-                );
-                info!("Serving script request for path: {}", req_path);
-                return scripts::process_normal(req_data, props).await;
+                req_data.body = get_body_str(req).await.clone();                
             }else{
-                let req_data = RequestData::new(
-                    method.clone(),
-                    path.clone(),
-                    query.clone(),
-                    headers.clone(),
-                    body.clone(),
-                    true
-                );
-                info!("Serving multipart script request for path: {}", req_path);
-                return scripts::process_multi_part(req_data, props, req).await;
-            } 
+               req_data.is_multipart = true;
+                get_parts(req, &mut req_data).await;
+            }
+            return scripts::process(req_data, props).await; 
         },        
         _ => {
                 info!("Serving file request for path: {}", req_path);
@@ -196,8 +211,8 @@ async fn get_body_str(req:Request<Body>) -> String{
         return Ok(data);
     }).await;
 
-    let body_vec = body_data.map(|v| {
-        return v;
+    let body_vec = body_data.map(|body_data| {
+        return body_data;
     });
 
     let body_str = match body_vec{
@@ -210,6 +225,59 @@ async fn get_body_str(req:Request<Body>) -> String{
     };
 
     return body_str;
+}
+
+async fn get_parts(req:Request<Body>, req_data:&mut RequestData){
+    let body = req.into_body();
+    let body_data = body.try_fold(Vec::new(), |mut data, chunk| async move {
+        data.extend_from_slice(&chunk);
+        return Ok(data);
+    }).await;
+
+    let body_vec = match body_data.map(|body_data| {
+        return body_data;
+    }){
+        Ok(data_vec) => data_vec,
+        Err(_e) => vec![0]
+    };
+
+    let ctype = req_data.headers.get("content-type").unwrap().clone();
+    let hyph_idx = (ctype.clone().last_index_of("-")+1) as usize;
+    let bnd = String::from(&ctype[hyph_idx..]);
+
+    let mut mp = Multipart::with_body(Cursor::new(body_vec.as_slice()), bnd.clone());
+    let mut fields:HashMap<String, String> = HashMap::new();
+    let mut files:HashMap<String, MPFile> = HashMap::new();
+
+    match mp.foreach_entry(|field|{
+        if field.is_text(){
+            let mut data_str = String::new();
+            let mut data = Box::new(field.data);
+            let read_result = data.read_to_string(&mut data_str);
+            let hyph_idx = data_str.clone().index_of("-") as usize;
+            let value = (&data_str[..hyph_idx]).trim();
+            if read_result.is_ok(){
+                fields.insert(format!("{}",field.headers.name.clone()), String::from(value));
+            }
+        }else{
+            let name = format!("{}", field.headers.name);
+            let fname = field.headers.filename.unwrap().clone();
+            let ctype = field.headers.content_type.unwrap().clone();
+
+            let mut fdata:Vec<u8> = Vec::new();
+            let mut data = Box::new(field.data);
+            let read_result = data.read_to_end(&mut fdata);
+            if read_result.is_ok(){
+                let mpfile = MPFile::new(name.clone(), fname.clone(), fdata.clone(), format!("{}/{}", ctype.type_(), ctype.subtype()));
+                files.insert(name.clone(), mpfile.clone());
+            }
+        }
+    }){
+        Ok(()) => info!("All parts processed"),
+        Err(_e) => error!("Error processing parts - {}", _e)
+    }
+    req_data.fields = fields.clone();
+    req_data.files = files.clone();
 }
 
 async fn shutdown_signal() {
