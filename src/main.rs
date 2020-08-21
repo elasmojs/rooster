@@ -24,14 +24,16 @@ mod strings;
 mod props;
 mod resources;
 mod admin;
-mod scripts;
+//mod rhaiscript;
+mod jsscript;
 
 
 use strings::StringUtils;
 use props::Props;
 
 const ADMIN_ROUTE:&str = "/_rooster";
-const SCRIPT_EXTN:&str = ".rhai";
+const RHAI_SCRIPT_EXTN:&str = ".rhai";
+const JS_SCRIPT_EXTN:&str = ".js";
 const F_SLASH:&str = "/";
 const DOT:&str = ".";
 const CONTENT_TYPE:&str = "content-type";
@@ -96,7 +98,8 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
     let last_slash_idx = String::from(req_path).last_index_of(F_SLASH) as usize;
     let file_name = &req_path[last_slash_idx+1..];
     let not_file = String::from(file_name).last_index_of(DOT) == -1;
-    let mut is_script = false;
+    //let mut is_rhai_script = false;
+    let mut is_js_script = false;
     let mut is_folder = false;
     let mut is_admin = false; 
 
@@ -110,15 +113,22 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             Err(_e) => {
                 if req_path.contains(ADMIN_ROUTE){
                     is_admin = true;
-                }else if Path::new(&(props.web_root.clone() + req_path + SCRIPT_EXTN)).exists(){
-                    is_script = true;
-                }
+                }else if Path::new(&(props.web_root.clone() + req_path + JS_SCRIPT_EXTN)).exists(){
+                    is_js_script = true;
+                }/*else if Path::new(&(props.web_root.clone() + req_path + RHAI_SCRIPT_EXTN)).exists(){
+                    is_rhai_script = true;
+                }*/
             }
         };
     }else{
         if req_path.to_lowercase().contains(ADMIN_ROUTE){
             is_admin = true;
-        }else if req_path.to_lowercase().contains(SCRIPT_EXTN){
+        }else if req_path.to_lowercase().contains(JS_SCRIPT_EXTN){
+            error!("Error serving request for path: {}", req_path);
+            let mut response = Response::default();
+            *response.status_mut() = StatusCode::FORBIDDEN;
+            return Ok(response);
+        }else if req_path.to_lowercase().contains(RHAI_SCRIPT_EXTN){
             error!("Error serving request for path: {}", req_path);
             let mut response = Response::default();
             *response.status_mut() = StatusCode::FORBIDDEN;
@@ -148,8 +158,8 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             info!("Serving admin request for path: {}", req_path);
             return admin::process(req_path, props).await;
         },
-        req_path if is_script =>{
-            //process script
+        req_path if is_js_script =>{
+            //process js script
             info!("Serving script request for path: {}", req_path);
             let method = req.method().clone().to_string();
             let headers = get_headers(req.headers().clone()).await;
@@ -183,8 +193,47 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                req_data.is_multipart = true;
                 get_parts(req, &mut req_data).await;
             }
-            return scripts::process(req_data, props).await; 
-        },        
+            return jsscript::process(req_data, props).await; 
+        },
+        /* 
+        req_path if is_rhai_script =>{
+            //process rhai script
+            info!("Serving script request for path: {}", req_path);
+            let method = req.method().clone().to_string();
+            let headers = get_headers(req.headers().clone()).await;
+            let path = String::from(req_path);
+
+            let mut is_multipart = false;
+            let has_content_type = headers.contains_key(CONTENT_TYPE);
+            if has_content_type{
+                match headers.get(CONTENT_TYPE){
+                    Some(ctype) => {
+                        if ctype.contains(MULTI_PART_CONTENT_TYPE){
+                            is_multipart = true;
+                        }
+                    },
+                    None => is_multipart = false
+                }
+            }
+
+            let mut req_data = RequestData::new(
+                method.clone(),
+                path.clone(),
+                query.clone(),
+                headers.clone(),
+                String::from(""),
+                false
+            );
+            info!("Serving script request for path: {}", req_path);
+            if !is_multipart{
+                req_data.body = get_body_str(req).await.clone();                
+            }else{
+               req_data.is_multipart = true;
+                get_parts(req, &mut req_data).await;
+            }
+            return rhaiscript::process(req_data, props).await; 
+        },
+        */        
         _ => {
                 info!("Serving file request for path: {}", req_path);
                 return static_.clone().serve(req).await;
@@ -295,7 +344,7 @@ async fn main() {
     let net_port = props.net_port.clone();
 
     let static_ = Static::new(Path::new(&props.web_root));
-
+    
     let service = make_service_fn(|socket: &AddrStream| {
         props.remote_addr = socket.remote_addr().ip().to_string();
         let static_ = static_.clone();
@@ -313,5 +362,5 @@ async fn main() {
 
     if let Err(e) = graceful.await {
         eprintln!("server error: {}", e);
-    }    
+    } 
 }

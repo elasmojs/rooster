@@ -1,20 +1,19 @@
 use std::fs::File;
 use std::io::{Error as IoError, Read};
 use std::str;
-use std::collections::HashMap;
 
 use log::*;
 
 use hyper::{Body, Response, header::HeaderValue, StatusCode, };
 
-use rhai::{Engine, OptimizationLevel, Scope, Dynamic, Map};
+use ducc::{Ducc, ExecSettings, Value, Error as DuccError};
+//use ducc::{Ducc, ExecSettings, Value, Error as DuccError, Invocation};
 
 use crate::props::Props;
 use crate::RequestData;
 //use crate::MPFile;
 
-const SCRIPT_EXTN:&str = ".rhai";
-const SCRIPT_MAIN:&str = "main";
+const SCRIPT_EXTN:&str = ".js";
 const SERVER_ERROR:u16 = 500;
 
 pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, IoError>{
@@ -29,7 +28,8 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         }
     }
     
-    let mut script_file = match File::open(&(props.web_root.clone() + &req_data.path.clone() + SCRIPT_EXTN)) {
+    let file_name = props.web_root.clone() + &req_data.path.clone() + SCRIPT_EXTN;
+    let mut script_file = match File::open(&file_name) {
         Err(err) => {
             error!("Could not open script file for path: {}, Error - {}", req_data.path, err);
             let mut response = Response::default();
@@ -46,17 +46,9 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         return get_server_error_response();
     }
 
-    let mut engine = Engine::new();
-
-    #[cfg(not(feature = "no_optimize"))]
-    engine.set_optimization_level(OptimizationLevel::Full);
-    engine.set_max_expr_depths(props.max_expr_depths_global, props.max_expr_depths_local);
-    engine.set_max_call_levels(props.max_call_levels);
-    engine.set_max_modules(props.max_modules);
-    engine.set_max_map_size(props.max_map_size);
-    engine.set_max_array_size(props.max_array_size);
-    engine.set_max_string_size(props.max_string_size);
-
+    let engine = Ducc::new();
+    
+    /*
     let ast = engine.compile(&contents);
     if ast.is_err() {
         error!("Could not compile script file for path: {}, Error - {}", req_data.path, ast.err().unwrap());
@@ -77,33 +69,37 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     
     let mut scope = Scope::new();
     scope.push("request", request_map.clone());
-    
+    */
     debug!("Request: \r\n{}", get_request_data(req_data.clone()));
-    let result:Dynamic = match engine.call_fn(&mut scope, &(ast.unwrap()), SCRIPT_MAIN, () ){
-        Ok(result) => {
-            result
-        },
-        Err(err) => {
-            error!("Error in script processing for path: {}, Error - {}", req_data.path, err);
-            return get_server_error_response()
+    let evalresult:Result<Value, DuccError> = engine.exec(contents.as_str(), Some(&file_name), ExecSettings::default());
+    if evalresult.is_ok(){
+        let val = evalresult.unwrap();
+        let resp_body;
+        if val.is_string(){
+            resp_body = val.as_string().unwrap().to_string().unwrap();
+        }else if val.is_number(){
+            resp_body = format!("{}", val.as_number().unwrap());
+        }else if val.is_boolean(){
+            resp_body = format!("{}", val.as_boolean().unwrap());
+        }else if val.is_object(){
+            resp_body = format!("{:?}", val.as_object().unwrap());
+        }else if val.is_null(){
+            resp_body = format!("null");
+        }else if val.is_undefined(){
+            resp_body = format!("undefined");
+        }else{
+            resp_body = format!("Unknown value: {:?}", val);
         }
-    };
 
-    let result_str:String = match result.try_cast::<String>(){
-        Some(result_str) => {
-            result_str
-        },
-        None => {
-            error!("Unexpected response from script file for path: {}", req_data.path);
-            return get_server_error_response()
-        }
-    };
-    
-    let mut response = Response::new(Body::from(result_str));
-    response.headers_mut().insert("Cache-Control", HeaderValue::from_static("no-cache"));
-    return Ok(response);
+        let mut response = Response::new(Body::from(resp_body.clone()));
+        response.headers_mut().insert("Cache-Control", HeaderValue::from_static("no-cache"));
+        return Ok(response);
+    }else{
+        error!("Could not read script file for path: {}, Error - {}", req_data.path, evalresult.unwrap_err());
+        return get_server_error_response();
+    }
 }
-
+/*
 fn get_headers(headers:HashMap<String, String>) -> Map{
     let mut headers_map = Map::new();
     for (key, value) in headers{
@@ -111,6 +107,7 @@ fn get_headers(headers:HashMap<String, String>) -> Map{
     }
     return headers_map;
 }
+*/
 
 fn get_request_data(req:RequestData) -> String{
     let mut req_data_str = format!("{} {}?{}\r\n", req.method, req.path, req.query);
