@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+use std::time::SystemTime;
 use std::clone::Clone;
 use std::fs::{metadata};
 use std::io::{Cursor, Read, Error as IoError};
@@ -136,6 +137,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         }
     }
 
+    let stime = SystemTime::now();
     match req_path{
         req_path if is_folder =>{
             //process folders
@@ -151,12 +153,15 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             let request = Request::get(default_uri)
                     .body(())
                     .unwrap();
+            debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
             return static_.clone().serve(request).await;
         },
         req_path if is_admin =>{
             //process rooster admin
             info!("Serving admin request for path: {}", req_path);
-            return admin::process(req_path, props).await;
+            let admin_resp = admin::process(req_path, props).await;
+            debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
+            return admin_resp;
         },
         req_path if is_js_script =>{
             //process js script
@@ -186,14 +191,16 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                 String::from(""),
                 false
             );
-            info!("Serving script request for path: {}", req_path);
+
             if !is_multipart{
                 req_data.body = get_body_str(req).await.clone();                
             }else{
                req_data.is_multipart = true;
                 get_parts(req, &mut req_data).await;
             }
-            return jsscript::process(req_data, props).await; 
+            let script_resp = jsscript::process(req_data, props).await;
+            debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
+            return script_resp;
         },
         /* 
         req_path if is_rhai_script =>{
@@ -236,7 +243,9 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         */        
         _ => {
                 info!("Serving file request for path: {}", req_path);
-                return static_.clone().serve(req).await;
+                let static_resp = static_.clone().serve(req).await;
+                debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
+                return static_resp;
         }
     }
 }
