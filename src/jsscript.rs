@@ -246,7 +246,7 @@ fn require(inv: Invocation) -> Result<Value, DuccError>{
     let stime = SystemTime::now();
     let engine = inv.ducc;
     let arg = &inv.args.get(0).as_string().unwrap().to_string().unwrap();
-    info!("Loading script: {}", arg);
+    debug!("Loading script: {}", arg);
     
     let robj:Object = engine.globals().get("_rooster").unwrap();
     
