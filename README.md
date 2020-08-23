@@ -6,7 +6,7 @@ A tiny footprint application server with Rust. This is an experimental project c
 # Announcements
 ## Aug 2020
 - Script Support
-  - Rooster now has JS server script support
+  - Rooster now has a very basic JS server script support
   - It is ES5 compliant and uses [Duktape engine](https://duktape.org/) via the [Ducc](https://github.com/SkylerLipthay/ducc) rust bindings
   - It can load and serve script files including external libraries such as Moment JS, Math JS and more.
   - Examples can be found in the test repository [here](https://github.com/elasmojs/rooster-test)
