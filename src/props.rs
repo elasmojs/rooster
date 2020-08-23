@@ -9,7 +9,7 @@ const DEFAULT_WEB_ROOT:&str = ".";
 const DEFAULT_WEB_DEFAULT:&str = "index.html";
 
 const DEFAULT_LOG_LEVEL:&str = "ERROR";
-const DEFAULT_LOG_FILE_PATH:&str = "./rooster.log";
+const DEFAULT_LOG_FOLDER_PATH:&str = "./logs";
 const DEFAULT_LOG_TO_CONSOLE:bool = false;
 const DEFAULT_LOG_TIME_FORMAT:&str = "%m-%d-%Y %T";
 
@@ -27,7 +27,7 @@ pub struct Props{
     pub web_default:String,
     pub remote_addr:String,
 
-    pub log_file_path:String,
+    pub log_folder_path:String,
     pub log_level:String,
     pub log_to_console:bool,
     pub log_time_format:String,
@@ -43,7 +43,7 @@ pub struct Props{
 
 impl Props{
     fn new(port:i32, root:String, default:String, 
-        log_file_path:String, log_level:String, log_to_console:bool, log_time_format:String,
+        log_folder_path:String, log_level:String, log_to_console:bool, log_time_format:String,
         max_expr_depths_local:usize, max_expr_depths_global:usize, 
         max_call_levels:usize, max_modules:usize,
         max_map_size:usize, max_array_size:usize,
@@ -53,7 +53,7 @@ impl Props{
             web_root: root,
             web_default: default,
             remote_addr: String::from(""),
-            log_file_path: log_file_path,
+            log_folder_path: log_folder_path,
             log_level: log_level,
             log_to_console: log_to_console,
             log_time_format: log_time_format,
@@ -86,7 +86,7 @@ lazy_static! {
 
 pub fn get_props() -> Props{
     return Props::new(get_port(), get_web_root(), get_web_default(),
-    get_log_file_path(), get_log_level(), get_log_to_console(), get_log_time_format(),
+    get_log_folder_path(), get_log_level(), get_log_to_console(), get_log_time_format(),
     get_max_expr_depths_local(), get_max_expr_depths_global(),
     get_max_call_levels(), get_max_modules(),
     get_max_map_size(), get_max_array_size(),
@@ -123,13 +123,13 @@ pub fn get_web_default() -> String {
     return String::from(web_default);
 }
 
-pub fn get_log_file_path() -> String {
-    let log_file_path_prop = PROPS.get("log.file");
-    let mut log_file_path = DEFAULT_LOG_FILE_PATH;
-    if !log_file_path_prop.is_none(){
-        log_file_path = log_file_path_prop.unwrap().trim();
+pub fn get_log_folder_path() -> String {
+    let log_folder_path_prop = PROPS.get("log.folder");
+    let mut log_folder_path = DEFAULT_LOG_FOLDER_PATH;
+    if !log_folder_path_prop.is_none(){
+        log_folder_path = log_folder_path_prop.unwrap().trim();
     }
-    return String::from(log_file_path);
+    return String::from(log_folder_path);
 }
 
 pub fn get_log_level() -> String {

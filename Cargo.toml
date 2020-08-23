@@ -12,6 +12,7 @@ edition = "2018"
 # Build win 32: cargo build --target=i686-pc-windows-msvc --release
 
 [dependencies]
+chrono = "0.4.15"
 log = "0.4.8"
 simplelog = "0.8.0"
 bytes = "0.5.5"
