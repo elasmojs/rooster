@@ -1,7 +1,14 @@
 <img src="./webroot/rooster.png" href="http://icons8.com/" alt="Rooster Personal Web Server" width="128"/>
 
 # Rooster
-A personal web server with Rust. This is an experimental project created as an attempt to scratch a personal itch but with growing ambitions. It is currently a single executable of about ~3 MB in size.
+A tiny footprint application server with Rust. This is an experimental project created as an attempt to scratch a personal itch but with growing ambitions. It is currently a single executable of about ~3 MB in size.
+
+# Announcements
+## Aug 2020
+- Script Support
+  - Rooster now has JS server script support
+  - It can load and serve script files including external libraries such as Moment JS, Math JS and more.
+  - Examples can be found in the test repository [here](https://github.com/elasmojs/rooster-test)
 
 ## Downloads
 [Windows 32 bit](./dist/rooster-win32.exe)
@@ -35,6 +42,9 @@ A small about Rooster page
 
 ### /_rooster/shutdown
 Shuts the server down. (Allows requests orginating from localhost only)
+
+## Tests Repo
+The Rooster tests repo is [here](https://github.com/elasmojs/rooster-test). Check it out for some simple examples of using Rooster.
 
 ## Performance
 10K user test with Locust running on same 16GB RAM laptop
