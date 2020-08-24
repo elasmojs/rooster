@@ -73,28 +73,29 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     engine.globals().set("exports", engine.create_object()).unwrap(); //exports
     engine.globals().set("global", engine.globals()).unwrap(); //global reference
 
-    /*
-    let ast = engine.compile(&contents);
-    if ast.is_err() {
-        error!("Could not compile script file for path: {}, Error - {}", req_data.path, ast.err().unwrap());
-        return get_server_error_response()
+    //Adding Rooster object
+    let rooster = engine.create_object();
+    let request = engine.create_object();
+    
+    let headers = engine.create_object();
+    for (key, value) in req_data.headers.clone(){
+        headers.set(key.clone(), value.clone()).unwrap();
     }
-
-    let mut request_map = Map::new();
-
-    let headers_map = get_headers(req_data.headers.clone());
     
-    request_map.insert(String::from("remote_addr"), Dynamic::from(props.remote_addr.clone()));
-    request_map.insert(String::from("method"), Dynamic::from(req_data.method.clone()));
-    request_map.insert(String::from("path"), Dynamic::from(req_data.path.clone()));
-    request_map.insert(String::from("query"), Dynamic::from(req_data.query.clone()));
-    request_map.insert(String::from("headers"), Dynamic::from(headers_map.clone()));
-    request_map.insert(String::from("body"), Dynamic::from(req_data.body.clone()));
-    request_map.insert(String::from("is_multipart"), Dynamic::from(req_data.is_multipart));
+    //Adding request details
+    request.set("headers", headers).unwrap();
+    request.set("remote_addr", props.remote_addr.clone()).unwrap();
+    request.set("method", req_data.method.clone()).unwrap();
+    request.set("path", req_data.path.clone()).unwrap();
+    request.set("query", req_data.query.clone()).unwrap();
+    request.set("body", req_data.body.clone()).unwrap();
+    request.set("isMultipart", req_data.is_multipart).unwrap();
     
-    let mut scope = Scope::new();
-    scope.push("request", request_map.clone());
-    */
+    rooster.set("request", request.clone()).unwrap();
+    engine.globals().set("$rs", rooster.clone()).unwrap();
+    let robj:Object = engine.globals().get("$rs").unwrap();
+    engine.globals().set("rooster", robj).unwrap();
+    
     debug!("Request: \r\n{}", get_request_data(req_data.clone()));
     let evalresult:Result<Value, DuccError> = engine.exec(contents.as_str(), Some(&file_name), ExecSettings::default());
     if evalresult.is_ok(){
@@ -125,15 +126,6 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         return get_server_error_response(errmsg);
     }
 }
-/*
-fn get_headers(headers:HashMap<String, String>) -> Map{
-    let mut headers_map = Map::new();
-    for (key, value) in headers{
-        headers_map.insert(key.clone(), Dynamic::from(value));
-    }
-    return headers_map;
-}
-*/
 
 fn get_request_data(req:RequestData) -> String{
     let mut req_data_str = format!("{} {}?{}\r\n", req.method, req.path, req.query);
