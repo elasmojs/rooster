@@ -8,12 +8,11 @@ use std::str;
 use log::*;
 
 use relative_path::RelativePath;
-use hyper::{Body, Response, header::HeaderValue, StatusCode, };
-use ducc::{Ducc, ExecSettings, Value, Error as DuccError, Invocation, Object};
+use hyper::{Body, Response, header::HeaderValue, header::HeaderName, StatusCode};
+use ducc::{Ducc, ExecSettings, Value, Error as DuccError, Invocation, Object, Properties};
 
 use crate::props::Props;
 use crate::RequestData;
-//use crate::MPFile;
 
 const SCRIPT_EXTN:&str = ".js";
 const SERVER_ERROR:u16 = 500;
@@ -91,34 +90,59 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     request.set("body", req_data.body.clone()).unwrap();
     request.set("isMultipart", req_data.is_multipart).unwrap();
     
+    let response = engine.create_object();
+    response.set("headers", engine.create_object()).unwrap();
+    response.set("body", engine.create_object()).unwrap();
+
     rooster.set("request", request.clone()).unwrap();
-    engine.globals().set("$rs", rooster.clone()).unwrap();
-    let robj:Object = engine.globals().get("$rs").unwrap();
+    rooster.set("response", response.clone()).unwrap();
+    engine.globals().set("$r", rooster.clone()).unwrap();
+    let robj:Object = engine.globals().get("$r").unwrap();
     engine.globals().set("rooster", robj).unwrap();
     
     debug!("Request: \r\n{}", get_request_data(req_data.clone()));
     let evalresult:Result<Value, DuccError> = engine.exec(contents.as_str(), Some(&file_name), ExecSettings::default());
     if evalresult.is_ok(){
-        let val = evalresult.unwrap();
-        let resp_body;
-        if val.is_string(){
-            resp_body = val.as_string().unwrap().to_string().unwrap();
-        }else if val.is_number(){
-            resp_body = format!("{}", val.as_number().unwrap());
-        }else if val.is_boolean(){
-            resp_body = format!("{}", val.as_boolean().unwrap());
-        }else if val.is_object(){
-            resp_body = format!("{:?}", val.as_object().unwrap());
-        }else if val.is_null(){
-            resp_body = format!("null");
-        }else if val.is_undefined(){
-            resp_body = format!("undefined");
-        }else{
-            resp_body = format!("Unknown value: {:?}", val);
+        let rooster_res = engine.globals().get("$r");
+        if rooster_res.is_err(){
+            let errmsg = format!("Error evaluating script file for path: {}, Error - {}", req_data.path, rooster_res.unwrap_err());
+            error!("{}", errmsg);
+            return get_server_error_response(errmsg);
+        }
+        
+        let rooster:Object = rooster_res.unwrap();
+        let response_res = rooster.get("response");
+        if response_res.is_err(){
+            let errmsg = format!("Response object not found for path: {}, Error - {}", req_data.path, response_res.unwrap_err());
+            error!("{}", errmsg);
+            return get_server_error_response(errmsg);
         }
 
+        let resp:Object = response_res.unwrap();
+        let body_res = resp.get("body");
+        if body_res.is_err(){
+            let errmsg = format!("Response body not found for path: {}, Error - {}", req_data.path, body_res.unwrap_err());
+            error!("{}", errmsg);
+            return get_server_error_response(errmsg);
+        }
+        
+        let resp_body:String = body_res.unwrap();
         let mut response = Response::new(Body::from(resp_body.clone()));
-        response.headers_mut().insert("Cache-Control", HeaderValue::from_static("no-cache"));
+        
+        let hmut = response.headers_mut();
+        hmut.insert("Cache-Control", HeaderValue::from_static("no-cache"));
+        let headers_res:Result<Object, DuccError> = resp.get("headers");
+        if headers_res.is_ok(){
+            let hobj = headers_res.unwrap();
+            let headers:Properties<String, String> = hobj.properties();
+            for header in headers{
+                if header.is_ok(){
+                    let (key, value) = header.unwrap();
+                    hmut.insert(HeaderName::from_bytes(key.as_bytes()).unwrap(), HeaderValue::from_str(value.as_str()).unwrap());
+                }
+            }
+        }
+
         return Ok(response);
     }else{
         let errmsg = format!("Error loading script file for path: {}, Error - {}", req_data.path, evalresult.unwrap_err());
