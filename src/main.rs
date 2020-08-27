@@ -27,6 +27,7 @@ mod resources;
 mod admin;
 //mod rhaiscript;
 mod jsscript;
+mod api;
 
 
 use strings::StringUtils;

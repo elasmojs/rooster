@@ -13,6 +13,7 @@ use ducc::{Ducc, ExecSettings, Value, Error as DuccError, Invocation, Object, Pr
 
 use crate::props::Props;
 use crate::RequestData;
+use crate::api;
 
 const SCRIPT_EXTN:&str = ".js";
 const SERVER_ERROR:u16 = 500;
@@ -72,8 +73,11 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     engine.globals().set("exports", engine.create_object()).unwrap(); //exports
     engine.globals().set("global", engine.globals()).unwrap(); //global reference
 
+
     //Adding Rooster object
     let rooster = engine.create_object();
+
+    //Adding request object
     let request = engine.create_object();
     
     let headers = engine.create_object();
@@ -264,6 +268,15 @@ fn require(inv: Invocation) -> Result<Value, DuccError>{
     let arg = &inv.args.get(0).as_string().unwrap().to_string().unwrap();
     debug!("Loading script: {}", arg);
     
+    let core_api = api::load_core_api(arg.clone().as_str(), engine);
+    if core_api{
+        let api_holder_res:Result<Value, _> = engine.globals().get("api");
+        let api_holder = api_holder_res.unwrap();
+        let api_holder_obj = api_holder.as_object().unwrap();
+        let api_res:Result<Value, _> = api_holder_obj.get(arg.clone().as_str());
+        return Ok(api_res.unwrap());
+    }
+
     let robj:Object = engine.globals().get("_rooster").unwrap();
     
     let webroot:String = robj.get("wr").unwrap();
