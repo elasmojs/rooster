@@ -1,11 +1,16 @@
 use std::fs::{File, OpenOptions, remove_file};
 use std::io::{Read, Write};
+use std::path::Path;
 
 use log::*;
 pub struct FileIO{}
 
 impl FileIO{
     pub fn create(filepath:String) -> bool{
+        let path = Path::new(&filepath);
+        if path.exists(){
+            return true;
+        }
         let res = File::create(&filepath);
         if res.is_ok(){
             return true;
@@ -97,6 +102,10 @@ impl FileIO{
     
 
     pub fn remove(filepath:String) -> bool{
+        let path = Path::new(&filepath);
+        if !path.exists(){
+            return true;
+        } 
         let res = remove_file(&filepath);
         if res.is_ok(){
             return true;

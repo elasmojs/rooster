@@ -1075,9 +1075,11 @@ dependencies = [
  "lazy_static",
  "log 0.4.8",
  "multipart",
+ "rand 0.7.3",
  "relative-path",
  "simplelog",
  "tokio",
+ "uuid",
  "webbrowser",
 ]
 
@@ -1419,6 +1421,15 @@ dependencies = [
  "idna 0.2.0",
  "matches",
  "percent-encoding 2.1.0",
+]
+
+[[package]]
+name = "uuid"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9fde2f6a4bea1d6e007c4ad38c6839fa71cbb63b6dbf5b595aa38dc9b1093c11"
+dependencies = [
+ "rand 0.7.3",
 ]
 
 [[package]]

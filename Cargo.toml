@@ -26,5 +26,7 @@ futures-util = "0.3.5"
 multipart = "0.17.0"
 #rhai = "0.15.1"
 ducc = "0.1.5"
+uuid = { version = "0.8.1", features = ["v4"] }
+rand = "0.7.3"
 webbrowser = "0.5.4"
 
