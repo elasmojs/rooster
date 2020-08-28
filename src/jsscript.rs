@@ -59,6 +59,7 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     //Adding rooster object
     let robj = engine.create_object();
     robj.set("wr", props.web_root.clone()).unwrap();
+    robj.set("dr", props.data_root.clone()).unwrap();
     robj.set("csp", script_path).unwrap();
     engine.globals().set("_rooster", robj).unwrap();
 
@@ -123,15 +124,23 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         }
 
         let resp:Object = response_res.unwrap();
-        let body_res = resp.get("body");
+        
+        let body_res:Result<Value, _> = resp.get("body");
         if body_res.is_err(){
             let errmsg = format!("Response body not found for path: {}, Error - {}", req_data.path, body_res.unwrap_err());
             error!("{}", errmsg);
             return get_server_error_response(errmsg);
         }
-        
-        let resp_body:String = body_res.unwrap();
-        let mut response = Response::new(Body::from(resp_body.clone()));
+
+        let body_obj:Value = body_res.unwrap();
+        let mut response:Response<Body>;
+        if body_obj.is_string(){
+            let resp_body:String = body_obj.as_string().unwrap().to_string().unwrap();
+            response = Response::new(Body::from(resp_body.clone()));
+        }else{
+            let resp_bytes = body_obj.as_bytes().unwrap().to_vec();
+            response = Response::new(Body::from(resp_bytes));
+        }
         
         let hmut = response.headers_mut();
         hmut.insert("Cache-Control", HeaderValue::from_static("no-cache"));

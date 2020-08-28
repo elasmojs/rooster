@@ -63,7 +63,6 @@ impl FileIO{
         }
     }
 
-    /*
     pub fn write_bytes(filepath:String, buf:&[u8]) -> bool{
         let file = OpenOptions::new().write(true).open(&filepath);
         if file.is_ok(){
@@ -95,8 +94,8 @@ impl FileIO{
             return false;
         }
     }
-    */
     
+
     pub fn remove(filepath:String) -> bool{
         let res = remove_file(&filepath);
         if res.is_ok(){

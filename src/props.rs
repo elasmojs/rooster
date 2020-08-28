@@ -8,62 +8,47 @@ const DEFAULT_PORT:u16 = 7070;
 const DEFAULT_WEB_ROOT:&str = ".";
 const DEFAULT_WEB_DEFAULT:&str = "index.html";
 
+const DEFAULT_DATA_ROOT:&str = "./data";
+
 const DEFAULT_LOG_LEVEL:&str = "ERROR";
 const DEFAULT_LOG_FOLDER_PATH:&str = "./logs";
 const DEFAULT_LOG_TO_CONSOLE:bool = false;
 const DEFAULT_LOG_TIME_FORMAT:&str = "%m-%d-%Y %T";
 
-const DEFAULT_MAX_EXPR_DEPTH:u16 = 500;
-const DEFAULT_MAX_CALL_LEVELS:u16 = 500;
-const DEFAULT_MAX_MODULES:u16 = 1000;
-const DEFAULT_MAX_MAP_SIZE:u16 = 1500;
-const DEFAULT_MAX_ARRAY_SIZE:u16 = 1500;
-const DEFAULT_MAX_STRING_SIZE:u16 = 5000;
 
 #[derive(Clone)]
 pub struct Props{
     pub net_port:i32,
+    pub remote_addr:String,
+
     pub web_root:String,
     pub web_default:String,
-    pub remote_addr:String,
+    
+    pub data_root:String,
 
     pub log_folder_path:String,
     pub log_level:String,
     pub log_to_console:bool,
-    pub log_time_format:String,
-    
-    pub max_expr_depths_global:usize,
-    pub max_expr_depths_local:usize,
-    pub max_call_levels:usize,
-    pub max_modules:usize,
-    pub max_map_size:usize,
-    pub max_array_size:usize,
-    pub max_string_size:usize
+    pub log_time_format:String
 }
 
 impl Props{
-    fn new(port:i32, root:String, default:String, 
+    fn new(port:i32, root:String, default:String, data_root:String, 
         log_folder_path:String, log_level:String, log_to_console:bool, log_time_format:String,
-        max_expr_depths_local:usize, max_expr_depths_global:usize, 
-        max_call_levels:usize, max_modules:usize,
-        max_map_size:usize, max_array_size:usize,
-        max_string_size:usize) -> Props{
+        ) -> Props{
         return Props{
             net_port: port,
+            remote_addr: String::from(""),
+
             web_root: root,
             web_default: default,
-            remote_addr: String::from(""),
+            
+            data_root: data_root,
+
             log_folder_path: log_folder_path,
             log_level: log_level,
             log_to_console: log_to_console,
-            log_time_format: log_time_format,
-            max_expr_depths_local: max_expr_depths_local,
-            max_expr_depths_global: max_expr_depths_global,
-            max_call_levels: max_call_levels,
-            max_modules: max_modules,
-            max_map_size: max_map_size,
-            max_array_size: max_array_size,
-            max_string_size:max_string_size
+            log_time_format: log_time_format
         };
     }
 }
@@ -85,12 +70,8 @@ lazy_static! {
 }
 
 pub fn get_props() -> Props{
-    return Props::new(get_port(), get_web_root(), get_web_default(),
-    get_log_folder_path(), get_log_level(), get_log_to_console(), get_log_time_format(),
-    get_max_expr_depths_local(), get_max_expr_depths_global(),
-    get_max_call_levels(), get_max_modules(),
-    get_max_map_size(), get_max_array_size(),
-    get_max_string_size());
+    return Props::new(get_port(), get_web_root(), get_web_default(), get_data_root(), 
+    get_log_folder_path(), get_log_level(), get_log_to_console(), get_log_time_format());
 }
 
 pub fn get_port() -> i32 {
@@ -121,6 +102,15 @@ pub fn get_web_default() -> String {
         web_default = web_default_prop.unwrap().trim();
     }
     return String::from(web_default);
+}
+
+pub fn get_data_root() -> String {
+    let data_root_prop = PROPS.get("data.root");
+    let mut data_root = DEFAULT_DATA_ROOT;
+    if !data_root_prop.is_none(){
+        data_root = data_root_prop.unwrap().trim();
+    }
+    return String::from(data_root);
 }
 
 pub fn get_log_folder_path() -> String {
@@ -160,88 +150,4 @@ pub fn get_log_time_format() -> String {
         log_time_format = log_time_format_prop.unwrap().trim();
     }
     return String::from(log_time_format);
-}
-
-pub fn get_max_expr_depths_global() -> usize {
-    let max_expr_depths_global_prop = PROPS.get("script.maxexprdepths.global");
-    let mut max_expr_depths_global = 500;
-    if !max_expr_depths_global_prop.is_none(){
-        max_expr_depths_global = match max_expr_depths_global_prop.unwrap().trim().parse::<u16>(){
-            Ok(medg) => medg,
-            Err(_e) => DEFAULT_MAX_EXPR_DEPTH
-        };
-    }
-    return max_expr_depths_global as usize;
-}
-
-pub fn get_max_expr_depths_local() -> usize {
-    let max_expr_depths_local_prop = PROPS.get("script.maxexprdepths.local");
-    let mut max_expr_depths_local = DEFAULT_MAX_EXPR_DEPTH;
-    if !max_expr_depths_local_prop.is_none(){
-        max_expr_depths_local = match max_expr_depths_local_prop.unwrap().trim().parse::<u16>(){
-            Ok(medl) => medl,
-            Err(_e) => DEFAULT_MAX_EXPR_DEPTH
-        };
-    }
-    return max_expr_depths_local as usize;
-}
-
-pub fn get_max_call_levels() -> usize {
-    let max_call_levels_prop = PROPS.get("script.maxcalllevels");
-    let mut max_call_levels = DEFAULT_MAX_CALL_LEVELS;
-    if !max_call_levels_prop.is_none(){
-        max_call_levels = match max_call_levels_prop.unwrap().trim().parse::<u16>(){
-            Ok(mcl) => mcl,
-            Err(_e) => DEFAULT_MAX_CALL_LEVELS
-        };
-    }
-    return max_call_levels as usize;
-}
-
-pub fn get_max_modules() -> usize {
-    let max_modules_prop = PROPS.get("script.maxmodules");
-    let mut max_modules = DEFAULT_MAX_MODULES;
-    if !max_modules_prop.is_none(){
-        max_modules = match max_modules_prop.unwrap().trim().parse::<u16>(){
-            Ok(mm) => mm,
-            Err(_e) => DEFAULT_MAX_MODULES
-        };
-    }
-    return max_modules as usize;
-}
-
-pub fn get_max_map_size() -> usize {
-    let max_map_size_prop = PROPS.get("script.maxmapsize");
-    let mut max_map_size = DEFAULT_MAX_MAP_SIZE;
-    if !max_map_size_prop.is_none(){
-        max_map_size = match max_map_size_prop.unwrap().trim().parse::<u16>(){
-            Ok(mms) => mms,
-            Err(_e) => DEFAULT_MAX_MAP_SIZE
-        };
-    }
-    return max_map_size as usize;
-}
-
-pub fn get_max_array_size() -> usize {
-    let max_array_size_prop = PROPS.get("script.maxarraysize");
-    let mut max_array_size = DEFAULT_MAX_ARRAY_SIZE;
-    if !max_array_size_prop.is_none(){
-        max_array_size = match max_array_size_prop.unwrap().trim().parse::<u16>(){
-            Ok(mas) => mas,
-            Err(_e) => DEFAULT_MAX_ARRAY_SIZE
-        };
-    }
-    return max_array_size as usize;
-}
-
-pub fn get_max_string_size() -> usize {
-    let max_string_size_prop = PROPS.get("script.maxstringsize");
-    let mut max_string_size = DEFAULT_MAX_STRING_SIZE;
-    if !max_string_size_prop.is_none(){
-        max_string_size = match max_string_size_prop.unwrap().trim().parse::<u16>(){
-            Ok(mss) => mss,
-            Err(_e) => DEFAULT_MAX_STRING_SIZE
-        };
-    }
-    return max_string_size as usize;
 }
