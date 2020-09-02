@@ -7,7 +7,7 @@ var resp = {
 
 resp.msg += "Random: " + rnd.get();
 resp.msg += ", Random Float: " + rnd.float();
-resp.msg += ", Range: " + rnd.range(0, 10);
+resp.msg += ", Range: " + rnd.range(0, "hello");
 
 $r.response.headers["content-type"] = "application/json";
 $r.response.body = JSON.stringify(resp);

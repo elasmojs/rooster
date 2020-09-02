@@ -28,5 +28,8 @@ multipart = "0.17.0"
 ducc = "0.1.5"
 uuid = { version = "0.8.1", features = ["v4"] }
 rand = "0.7.3"
+easy-hasher = "2.2.1"
+base64 = "0.12.3"
+urlencoding = "1.1.1"
 webbrowser = "0.5.4"
 

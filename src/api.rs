@@ -3,15 +3,21 @@ use ducc::{Ducc, Object, Value};
 mod fs;
 mod uuid;
 mod rnd;
+mod crypto;
+mod encode;
 
 use fs::load as loadfs;
 use self::uuid::load as loaduuid;
 use rnd::load as loadrnd;
+use crypto::load as loadcrypto;
+use encode::load as loadencode;
 
 pub const API_KEY:&str = "api";
 pub const FILE_API:&str = "fs";
 pub const UUID_API:&str = "uuid";
 pub const RND_API:&str = "rnd";
+pub const CRYPTO_API:&str = "crypto";
+pub const ENCODE_API:&str = "encode";
 
 pub fn load_core_api(name:&str, engine:&Ducc) -> bool{
     let api_obj:Value;
@@ -44,6 +50,18 @@ pub fn load_core_api(name:&str, engine:&Ducc) -> bool{
         RND_API => {
             if !api.contains_key(RND_API).unwrap(){
                 loadrnd(engine);
+            }            
+            return true;
+        },
+        CRYPTO_API => {
+            if !api.contains_key(CRYPTO_API).unwrap(){
+                loadcrypto(engine);
+            }            
+            return true;
+        },
+        ENCODE_API => {
+            if !api.contains_key(ENCODE_API).unwrap(){
+                loadencode(engine);
             }            
             return true;
         },

@@ -33,7 +33,6 @@ pub fn load(engine:&Ducc) -> bool{
     fileio.set("removeDir", engine.create_function(folder_remove)).unwrap();
     fileio.set("removeDirAll", engine.create_function(folder_remove_all)).unwrap();
 
-    //TODO: Add all other fileio API
     api.set(FILE_API, fileio).unwrap();
 
     return true;
@@ -48,8 +47,13 @@ pub fn file_create(inv: Invocation) -> Result<Value, DuccError>{
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        return Ok(Value::Boolean(FileIO::create(fpath)));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            return Ok(Value::Boolean(FileIO::create(fpath)));
+        }else{
+            error!("Invalid argument, expected string");
+            return Ok(Value::Boolean(false));    
+        }
     }else{
         error!("Invalid argument, expected 1 argument");
         return Ok(Value::Boolean(false));
@@ -64,11 +68,17 @@ pub fn file_write_text(inv: Invocation) -> Result<Value, DuccError> {
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
         
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
         let text_res = args.get(1);
-        let text = format!("{}", text_res.as_string().unwrap().to_string().unwrap());
-        let res = FileIO::write_text(fpath, text.as_str());
-        return Ok(Value::Boolean(res));
+        
+        if fpath_res.is_string() && text_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            let text = format!("{}", text_res.as_string().unwrap().to_string().unwrap());
+            let res = FileIO::write_text(fpath, text.as_str());
+            return Ok(Value::Boolean(res));
+        }else{
+            error!("Invalid argument, expected string arguments");
+            return Ok(Value::Boolean(false));    
+        }
     }else{
         error!("Invalid argument, expected 2 arguments");
         return Ok(Value::Boolean(false));
@@ -83,11 +93,17 @@ pub fn file_append_text(inv: Invocation) -> Result<Value, DuccError> {
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
         let text_res = args.get(1);
-        let text = format!("{}", text_res.as_string().unwrap().to_string().unwrap());
-        let res = FileIO::append_text(fpath, text.as_str());
-        return Ok(Value::Boolean(res));
+        
+        if fpath_res.is_string() && text_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            let text = format!("{}", text_res.as_string().unwrap().to_string().unwrap());
+            let res = FileIO::append_text(fpath, text.as_str());
+            return Ok(Value::Boolean(res));
+        }else{
+            error!("Invalid argument, expected string arguments");
+            return Ok(Value::Boolean(false));    
+        }
     }else{
         error!("Invalid argument, expected 2 arguments");
         return Ok(Value::Boolean(false));
@@ -102,12 +118,18 @@ pub fn file_read_text(inv: Invocation) -> Result<Value, DuccError> {
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        let mut text = String::from("");
-        let res = FileIO::read_text(fpath, &mut text);
-        if res{
-            return Ok(Value::String(engine.create_string(text.as_str()).unwrap()));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            let mut text = String::from("");
+            let res = FileIO::read_text(fpath.clone(), &mut text);
+            if res{
+                return Ok(Value::String(engine.create_string(text.as_str()).unwrap()));
+            }else{
+                error!("Unable to read file: {}", fpath.clone());
+                return Ok(Value::Null);
+            }
         }else{
+            error!("Invalid argument, expected string argument");
             return Ok(Value::Null);
         }
     }else{
@@ -124,13 +146,19 @@ pub fn file_read(inv: Invocation) -> Result<Value, DuccError> {
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        let mut buf = Vec::<u8>::new();
-        let res = FileIO::read_bytes(fpath, &mut buf);
-        if res{
-            return Ok(Value::Bytes(engine.create_bytes(&buf).unwrap()));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            let mut buf = Vec::<u8>::new();
+            let res = FileIO::read_bytes(fpath.clone(), &mut buf);
+            if res{
+                return Ok(Value::Bytes(engine.create_bytes(&buf).unwrap()));
+            }else{
+                error!("Error reading file: {}", fpath.clone());
+                return Ok(Value::Null);
+            }
         }else{
-            return Ok(Value::Null);
+            error!("Invalid argument, expected string argument");
+            return Ok(Value::Null);    
         }
     }else{
         error!("Invalid argument, expected 1 argument");
@@ -146,11 +174,17 @@ pub fn file_write(inv: Invocation) -> Result<Value, DuccError> {
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
         
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
         let bytes_res = args.get(1);
-        let buf = bytes_res.as_bytes().unwrap().to_vec();
-        let res = FileIO::write_bytes(fpath, &buf);
-        return Ok(Value::Boolean(res));
+
+        if fpath_res.is_string() && bytes_res.is_bytes(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            let buf = bytes_res.as_bytes().unwrap().to_vec();
+            let res = FileIO::write_bytes(fpath, &buf);
+            return Ok(Value::Boolean(res));
+        }else{
+            error!("Unexpected arguments for write");
+            return Ok(Value::Boolean(false));
+        }
     }else{
         error!("Invalid argument, expected 2 arguments");
         return Ok(Value::Boolean(false));
@@ -165,8 +199,13 @@ pub fn file_remove(inv: Invocation) -> Result<Value, DuccError>{
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        return Ok(Value::Boolean(FileIO::remove(fpath)));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            return Ok(Value::Boolean(FileIO::remove(fpath)));
+        }else{
+            error!("Invalid argument, expected string argument");
+            return Ok(Value::Boolean(false));
+        }
     }else{
         error!("Invalid argument, expected 1 argument");
         return Ok(Value::Boolean(false));
@@ -181,8 +220,13 @@ pub fn folder_create(inv: Invocation) -> Result<Value, DuccError>{
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        return Ok(Value::Boolean(FolderIO::create(fpath)));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            return Ok(Value::Boolean(FolderIO::create(fpath)));
+        }else{
+            error!("Invalid argument, expected string argument");
+            return Ok(Value::Boolean(false));
+        }
     }else{
         error!("Invalid argument, expected 1 argument");
         return Ok(Value::Boolean(false));
@@ -197,8 +241,13 @@ pub fn folder_create_all(inv: Invocation) -> Result<Value, DuccError>{
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        return Ok(Value::Boolean(FolderIO::create_all(fpath)));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            return Ok(Value::Boolean(FolderIO::create_all(fpath)));
+        }else{
+            error!("Invalid argument, expected string argument");
+            return Ok(Value::Boolean(false));
+        }
     }else{
         error!("Invalid argument, expected 1 argument");
         return Ok(Value::Boolean(false));
@@ -213,8 +262,13 @@ pub fn folder_remove(inv: Invocation) -> Result<Value, DuccError>{
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        return Ok(Value::Boolean(FolderIO::remove(fpath)));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            return Ok(Value::Boolean(FolderIO::remove(fpath)));
+        }else{
+            error!("Invalid argument, expected string argument");
+            return Ok(Value::Boolean(false));
+        }
     }else{
         error!("Invalid argument, expected 1 argument");
         return Ok(Value::Boolean(false));
@@ -229,8 +283,13 @@ pub fn folder_remove_all(inv: Invocation) -> Result<Value, DuccError>{
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
-        let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
-        return Ok(Value::Boolean(FolderIO::remove_all(fpath)));
+        if fpath_res.is_string(){
+            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            return Ok(Value::Boolean(FolderIO::remove_all(fpath)));
+        }else{
+            error!("Invalid argument, expected string argument");
+            return Ok(Value::Boolean(false));
+        }
     }else{
         error!("Invalid argument, expected 1 argument");
         return Ok(Value::Boolean(false));
