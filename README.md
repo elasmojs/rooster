@@ -1,7 +1,7 @@
 <img src="./webroot/rooster.png" href="http://icons8.com/" alt="Rooster Personal Web Server" width="128"/>
 
 # Rooster
-A small footprint, batteries included application server built with Rust. It comes along with an out of box Javascript support along with default set of commonly used APIs. It is currently just a single executable of about ~5 MB in size with zero dependencies.
+A small footprint, batteries included application server built with Rust. It comes along with an out of box Javascript support along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB in size with zero dependencies.
 
 # Announcements
 ## Aug 2020
