@@ -10,7 +10,7 @@ var headers = {
     "My-Post-Header": "My Header Value"
 }
 
-var body = "name=Vignesh%20Swaminathan&age=43";
+var body = "name=John%20Doe&age=33";
 
 var sresp = http.post("https://postman-echo.com/post", headers, body);
 if(sresp != null){

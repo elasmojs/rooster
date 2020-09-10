@@ -7,6 +7,7 @@ mod crypto;
 mod encode;
 mod zip;
 mod httpio;
+mod html;
 
 use fs::load as loadfs;
 use self::uuid::load as loaduuid;
@@ -15,6 +16,7 @@ use crypto::load as loadcrypto;
 use encode::load as loadencode;
 use self::zip::load as loadzip;
 use self::httpio::load as loadhttp;
+use self::html::{load as loadhtml, set_user_data as html_user_data};
 
 pub const API_KEY:&str = "api";
 pub const FILE_API:&str = "fs";
@@ -24,6 +26,11 @@ pub const CRYPTO_API:&str = "crypto";
 pub const ENCODE_API:&str = "encode";
 pub const ZIP_API:&str = "zip";
 pub const HTTP_API:&str = "http";
+pub const HTML_API:&str = "html";
+
+pub fn init_user_data(engine:&mut Ducc){
+    html_user_data(engine);   
+}
 
 pub fn load_core_api(name:&str, engine:&Ducc) -> bool{
     let api_obj:Value;
@@ -41,7 +48,6 @@ pub fn load_core_api(name:&str, engine:&Ducc) -> bool{
 
     match name{
         FILE_API => {
-            //Adding File API
             if !api.contains_key(FILE_API).unwrap(){
                 loadfs(engine);
             }            
@@ -80,6 +86,12 @@ pub fn load_core_api(name:&str, engine:&Ducc) -> bool{
         HTTP_API => {
             if !api.contains_key(HTTP_API).unwrap(){
                 loadhttp(engine);
+            }            
+            return true;
+        },
+        HTML_API => {
+            if !api.contains_key(HTML_API).unwrap(){
+                loadhtml(engine);
             }            
             return true;
         },

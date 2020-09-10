@@ -13,12 +13,12 @@ var parts = [
     {
         "type":"text",
         "name":"firstname",
-        "value":"Vignesh"
+        "value":"John"
     },
     {
         "type":"text",
         "name":"lastname",
-        "value":"Swaminathan"
+        "value":"Doe"
     },
     {
         "type":"file",

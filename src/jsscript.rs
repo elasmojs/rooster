@@ -52,7 +52,9 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         return get_server_error_response(errmsg);
     }
 
-    let engine = Ducc::new();
+    let mut engine = Ducc::new();
+    api::init_user_data(&mut engine);
+
     //Adding console object
     init_console(&engine);
 
