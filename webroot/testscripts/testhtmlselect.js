@@ -21,7 +21,7 @@ if(doc != null){
         results.name = elem.name();
         
         //html
-        results.select = elem.html();
+        results.html = elem.html();
 
         var liElems = elem.select("li");
         if(liElems != null){
