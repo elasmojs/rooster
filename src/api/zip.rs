@@ -6,7 +6,7 @@ mod zipio;
 use zipio::Zip;
 
 pub const API_KEY:&str = "api";
-pub const ROOSTER_KEY:&str = "_rooster";
+pub const GALE_KEY:&str = "_gale";
 pub const DATA_ROOT_KEY:&str = "dr"; 
 pub const ZIP_API:&str = "zip";
 
@@ -29,7 +29,7 @@ pub fn zip_create(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 2{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let srcpath_res = args.get(0);
@@ -53,7 +53,7 @@ pub fn zip_extract(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 2{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let srcpath_res = args.get(0);

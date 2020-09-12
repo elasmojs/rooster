@@ -492,6 +492,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "gale"
+version = "0.2.0"
+dependencies = [
+ "base64 0.12.3",
+ "bytes",
+ "chrono",
+ "dotproperties",
+ "ducc",
+ "easy-hasher",
+ "ego-tree",
+ "futures-util",
+ "hyper 0.13.6",
+ "hyper-staticfile",
+ "lazy_static",
+ "log 0.4.8",
+ "multipart",
+ "rand 0.7.3",
+ "relative-path",
+ "scraper",
+ "selectors",
+ "simplelog",
+ "tokio",
+ "ureq",
+ "urlencoding",
+ "uuid",
+ "walkdir",
+ "webbrowser",
+ "zip",
+]
+
+[[package]]
 name = "generator"
 version = "0.6.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1550,37 +1581,6 @@ dependencies = [
  "untrusted",
  "web-sys",
  "winapi 0.3.8",
-]
-
-[[package]]
-name = "rooster"
-version = "0.2.0"
-dependencies = [
- "base64 0.12.3",
- "bytes",
- "chrono",
- "dotproperties",
- "ducc",
- "easy-hasher",
- "ego-tree",
- "futures-util",
- "hyper 0.13.6",
- "hyper-staticfile",
- "lazy_static",
- "log 0.4.8",
- "multipart",
- "rand 0.7.3",
- "relative-path",
- "scraper",
- "selectors",
- "simplelog",
- "tokio",
- "ureq",
- "urlencoding",
- "uuid",
- "walkdir",
- "webbrowser",
- "zip",
 ]
 
 [[package]]

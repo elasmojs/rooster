@@ -12,7 +12,7 @@ use crate::props::Props;
 
 pub async fn process(req_path: &str, props: Props) -> Result<Response<Body>, IoError>{
     match req_path{
-        "/_rooster/shutdown" => {
+        "/_gale/shutdown" => {
             //Allow shutdown only when issued from the localhost
             info!("Serving shut down request");
             if !props.remote_addr.contains("127.0.0.1"){
@@ -25,7 +25,7 @@ pub async fn process(req_path: &str, props: Props) -> Result<Response<Body>, IoE
                 return shutdown().await;
             }
         },
-        "/_rooster/about" => {
+        "/_gale/about" => {
             info!("Serving about request");
             return about().await;
         },
@@ -42,7 +42,7 @@ async fn shutdown() -> Result<Response<Body>, IoError>{
     let shutdown_resp = resources::get("shutdown.html");
     let mut response = Response::new(Body::from(shutdown_resp));
     response.headers_mut().insert("Cache-Control", HeaderValue::from_static("no-cache"));
-    exit_rooster().await;
+    exit_gale().await;
     return Ok(response);
 }
 
@@ -53,7 +53,7 @@ async fn about() -> Result<Response<Body>, IoError>{
     return Ok(response);
 }
 
-async fn exit_rooster(){
+async fn exit_gale(){
     thread::spawn(|| {
         thread::sleep(Duration::from_millis(100));
         exit(0);

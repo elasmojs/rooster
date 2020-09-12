@@ -1,5 +1,5 @@
 [package]
-name = "rooster"
+name = "gale"
 version = "0.2.0"
 authors = ["elasmojs"]
 edition = "2018"

@@ -8,7 +8,7 @@ use fileio::FileIO;
 use folderio::FolderIO;
 
 pub const API_KEY:&str = "api";
-pub const ROOSTER_KEY:&str = "_rooster";
+pub const GALE_KEY:&str = "_gale";
 pub const DATA_ROOT_KEY:&str = "dr"; 
 pub const FILE_API:&str = "fs";
 
@@ -43,7 +43,7 @@ pub fn file_create(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -64,7 +64,7 @@ pub fn file_write_text(inv: Invocation) -> Result<Value, DuccError> {
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 2{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
         
         let fpath_res = args.get(0);
@@ -89,7 +89,7 @@ pub fn file_append_text(inv: Invocation) -> Result<Value, DuccError> {
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 2{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -114,7 +114,7 @@ pub fn file_read_text(inv: Invocation) -> Result<Value, DuccError> {
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -142,7 +142,7 @@ pub fn file_read(inv: Invocation) -> Result<Value, DuccError> {
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -170,7 +170,7 @@ pub fn file_write(inv: Invocation) -> Result<Value, DuccError> {
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 2{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
         
         let fpath_res = args.get(0);
@@ -195,7 +195,7 @@ pub fn file_remove(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -216,7 +216,7 @@ pub fn folder_create(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -237,7 +237,7 @@ pub fn folder_create_all(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -258,7 +258,7 @@ pub fn folder_remove(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);
@@ -279,7 +279,7 @@ pub fn folder_remove_all(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);

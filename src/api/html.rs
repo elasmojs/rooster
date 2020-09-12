@@ -13,7 +13,7 @@ use scraper::{Html, Selector, ElementRef, Node};
 use log::*;
 
 pub const API_KEY:&str = "api";
-pub const ROOSTER_KEY:&str = "_rooster";
+pub const GALE_KEY:&str = "_gale";
 pub const DATA_ROOT_KEY:&str = "dr"; 
 pub const HTML_API:&str = "html";
 
@@ -118,7 +118,7 @@ fn html_from_file(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 1{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let fpath_res = args.get(0);

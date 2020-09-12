@@ -9,5 +9,5 @@ resp.msg += "Random: " + rnd.get();
 resp.msg += ", Random Float: " + rnd.float();
 resp.msg += ", Range: " + rnd.range(0, "hello");
 
-$r.response.headers["content-type"] = "application/json";
-$r.response.body = JSON.stringify(resp);
+$g.response.headers["content-type"] = "application/json";
+$g.response.body = JSON.stringify(resp);

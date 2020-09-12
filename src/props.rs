@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::clone::Clone;
 
-const ROOSTER_CFG_FILE:&str = "./rooster.cfg";
+const GALE_CFG_FILE:&str = "./gale.cfg";
 
 const DEFAULT_PORT:u16 = 7070;
 const DEFAULT_WEB_ROOT:&str = ".";
@@ -55,7 +55,7 @@ impl Props{
 
 lazy_static! {
     static ref PROPS: HashMap<std::string::String, std::string::String> = {
-        let parsed_result = dotproperties::parse_from_file(ROOSTER_CFG_FILE);
+        let parsed_result = dotproperties::parse_from_file(GALE_CFG_FILE);
         let mut mapped = HashMap::new();
         let _parsed = match parsed_result{
             Ok(_parsed) => {

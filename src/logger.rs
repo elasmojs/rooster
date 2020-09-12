@@ -53,7 +53,7 @@ pub fn init_log(props:Props){
 
 fn get_log_file_name() -> String{
     let now = Utc::now();
-    let log_file_name = format!("/rooster-{}{}{}.log", now.year(), now.month(), now.day());
+    let log_file_name = format!("/gale-{}{}{}.log", now.year(), now.month(), now.day());
     return log_file_name;
 }
 

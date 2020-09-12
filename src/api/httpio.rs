@@ -8,7 +8,7 @@ mod httpio;
 use self::httpio::*;
 
 pub const API_KEY:&str = "api";
-pub const ROOSTER_KEY:&str = "_rooster";
+pub const GALE_KEY:&str = "_gale";
 pub const DATA_ROOT_KEY:&str = "dr"; 
 pub const HTTP_API:&str = "http";
 
@@ -128,7 +128,7 @@ pub fn http_post_multipart(inv: Invocation) -> Result<Value, DuccError>{
     let engine = inv.ducc;
     let args = inv.args;
     if args.len() == 3{
-        let robj:Object = engine.globals().get(ROOSTER_KEY).unwrap();
+        let robj:Object = engine.globals().get(GALE_KEY).unwrap();
         let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
 
         let url_res = args.get(0);

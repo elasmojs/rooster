@@ -8,8 +8,8 @@ if(img != null){
             var imgCopy = fs.read('out.png');
             if(imgCopy != null){
                 fs.remove('out.png');
-                $r.response.headers["content-type"] = "image/png";
-                $r.response.body = imgCopy;
+                $g.response.headers["content-type"] = "image/png";
+                $g.response.body = imgCopy;
             }else{
                 sendError("Could not read image copy");
             }
@@ -24,10 +24,10 @@ if(img != null){
 }
 
 function sendError(errMsg){
-    $r.response.headers["content-type"] = "application/json";
+    $g.response.headers["content-type"] = "application/json";
     var err = {
         code: 500,
         msg: errMsg
     }
-    $r.response.body = JSON.stringify(err);
+    $g.response.body = JSON.stringify(err);
 }

@@ -12,4 +12,10 @@ var results = {
     msg: msg
 }
 
-JSON.stringify(results);
+var resp = {
+    code: 200,
+    msg: results
+}
+
+$g.response.headers["content-type"] = "application/json";
+$g.response.body = JSON.stringify(resp);

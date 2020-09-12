@@ -29,5 +29,5 @@ if (fs.createDir(fpath)){
     resp.msg = "Could not create folder!";
 }
 
-$r.response.headers["content-type"] = "application/json";
-$r.response.body = JSON.stringify(resp);
+$g.response.headers["content-type"] = "application/json";
+$g.response.body = JSON.stringify(resp);

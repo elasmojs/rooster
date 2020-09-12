@@ -33,7 +33,7 @@ mod api;
 use strings::StringUtils;
 use props::Props;
 
-const ADMIN_ROUTE:&str = "/_rooster";
+const ADMIN_ROUTE:&str = "/_gale";
 const RHAI_SCRIPT_EXTN:&str = ".rhai";
 const JS_SCRIPT_EXTN:&str = ".js";
 const F_SLASH:&str = "/";
@@ -158,7 +158,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             return static_.clone().serve(request).await;
         },
         req_path if is_admin =>{
-            //process rooster admin
+            //process gale admin
             info!("Serving admin request for path: {}", req_path);
             let admin_resp = admin::process(req_path, props).await;
             debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
@@ -365,7 +365,7 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], net_port as u16));
     let server = Server::bind(&addr).serve(service);
     let graceful = server.with_graceful_shutdown(shutdown_signal());
-    info!("Rooster server started at => http://localhost:{}", net_port);
+    info!("Gale JS server started at => http://localhost:{}", net_port);
 
     let website_url = format!("http://localhost:{}", net_port);
     let _browser_result = webbrowser::open(&website_url);

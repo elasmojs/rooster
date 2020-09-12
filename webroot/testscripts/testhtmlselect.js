@@ -191,8 +191,8 @@ if(doc != null){
     resp.msg = "Could not parse HTML";
 }
 
-$r.response.headers["content-type"] = "application/json";
-$r.response.body = JSON.stringify(resp, true);
+$g.response.headers["content-type"] = "application/json";
+$g.response.body = JSON.stringify(resp, true);
 
 
 

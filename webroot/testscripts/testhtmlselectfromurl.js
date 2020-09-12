@@ -5,7 +5,7 @@ var resp = {
     "msg":{}
 };
 
-$r.response.headers["content-type"] = "application/json";
+$g.response.headers["content-type"] = "application/json";
 
 var url = 'https://news.ycombinator.com/'; 
 
@@ -20,16 +20,16 @@ if(doc != null){
         }
         resp += '</ul></body></html>';
         
-        $r.response.headers["content-type"] = "text/html";
-        $r.response.body = resp;
+        $g.response.headers["content-type"] = "text/html";
+        $g.response.body = resp;
     }else{
         resp.msg = "Could not find selection";
-        $r.response.body = JSON.stringify(resp, true);
+        $g.response.body = JSON.stringify(resp, true);
     }
 }else{
     resp.code = 500;
     resp.msg = "Could not parse HTML from URL";
-    $r.response.body = JSON.stringify(resp, true);
+    $g.response.body = JSON.stringify(resp, true);
 }
 
 

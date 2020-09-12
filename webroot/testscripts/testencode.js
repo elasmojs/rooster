@@ -5,7 +5,7 @@ var resp = {
     "msg":""
 };
 
-var inputStr = "Rooster Rocks!";
+var inputStr = "Gale JS!";
 var b64Encode = encoder.base64.encode(inputStr);
 var b64Decode = encoder.base64.decode(b64Encode);
 
@@ -21,5 +21,5 @@ resp.msg += "URI Input: " + inputURI;
 resp.msg += ", Encode: " + uriEncode;
 resp.msg += ", Decode: " + uriDecode;
 
-$r.response.headers["content-type"] = "application/json";
-$r.response.body = JSON.stringify(resp);
+$g.response.headers["content-type"] = "application/json";
+$g.response.body = JSON.stringify(resp);

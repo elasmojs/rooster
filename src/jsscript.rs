@@ -58,12 +58,12 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     //Adding console object
     init_console(&engine);
 
-    //Adding rooster object
+    //Adding gale object
     let robj = engine.create_object();
     robj.set("wr", props.web_root.clone()).unwrap();
     robj.set("dr", props.data_root.clone()).unwrap();
     robj.set("csp", script_path).unwrap();
-    engine.globals().set("_rooster", robj).unwrap();
+    engine.globals().set("_gale", robj).unwrap();
 
     //Adding module import
     let requirefn = engine.create_function(require);
@@ -77,8 +77,8 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     engine.globals().set("global", engine.globals()).unwrap(); //global reference
 
 
-    //Adding Rooster object
-    let rooster = engine.create_object();
+    //Adding Gale object
+    let gale = engine.create_object();
 
     //Adding request object
     let request = engine.create_object();
@@ -101,24 +101,24 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     response.set("headers", engine.create_object()).unwrap();
     response.set("body", engine.create_object()).unwrap();
 
-    rooster.set("request", request.clone()).unwrap();
-    rooster.set("response", response.clone()).unwrap();
-    engine.globals().set("$r", rooster.clone()).unwrap();
-    let robj:Object = engine.globals().get("$r").unwrap();
-    engine.globals().set("rooster", robj).unwrap();
+    gale.set("request", request.clone()).unwrap();
+    gale.set("response", response.clone()).unwrap();
+    engine.globals().set("$g", gale.clone()).unwrap();
+    let robj:Object = engine.globals().get("$g").unwrap();
+    engine.globals().set("gale", robj).unwrap();
     
     debug!("Request: \r\n{}", get_request_data(req_data.clone()));
     let evalresult:Result<Value, DuccError> = engine.exec(contents.as_str(), Some(&file_name), ExecSettings::default());
     if evalresult.is_ok(){
-        let rooster_res = engine.globals().get("$r");
-        if rooster_res.is_err(){
-            let errmsg = format!("Error evaluating script file for path: {}, Error - {}", req_data.path, rooster_res.unwrap_err());
+        let gale_res = engine.globals().get("$g");
+        if gale_res.is_err(){
+            let errmsg = format!("Error evaluating script file for path: {}, Error - {}", req_data.path, gale_res.unwrap_err());
             error!("{}", errmsg);
             return get_server_error_response(errmsg);
         }
         
-        let rooster:Object = rooster_res.unwrap();
-        let response_res = rooster.get("response");
+        let gale:Object = gale_res.unwrap();
+        let response_res = gale.get("response");
         if response_res.is_err(){
             let errmsg = format!("Response object not found for path: {}, Error - {}", req_data.path, response_res.unwrap_err());
             error!("{}", errmsg);
@@ -139,9 +139,13 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         if body_obj.is_string(){
             let resp_body:String = body_obj.as_string().unwrap().to_string().unwrap();
             response = Response::new(Body::from(resp_body.clone()));
-        }else{
+        }else if body_obj.is_bytes(){
             let resp_bytes = body_obj.as_bytes().unwrap().to_vec();
             response = Response::new(Body::from(resp_bytes));
+        }else{
+            let errmsg = format!("Invalid script response for path: {}, Error - {:?}", req_data.path, body_obj);
+            error!("{}", errmsg);
+            return get_server_error_response(errmsg);
         }
         
         let hmut = response.headers_mut();
@@ -288,7 +292,7 @@ fn require(inv: Invocation) -> Result<Value, DuccError>{
         return Ok(api_res.unwrap());
     }
 
-    let robj:Object = engine.globals().get("_rooster").unwrap();
+    let robj:Object = engine.globals().get("_gale").unwrap();
     
     let webroot:String = robj.get("wr").unwrap();
     let rwpath = RelativePath::new(webroot.as_str());
