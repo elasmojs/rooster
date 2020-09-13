@@ -5,8 +5,10 @@ use std::clone::Clone;
 const GALE_CFG_FILE:&str = "./gale.cfg";
 
 const DEFAULT_PORT:u16 = 7070;
-const DEFAULT_WEB_ROOT:&str = ".";
+const DEFAULT_WEB_ROOT:&str = "./web";
 const DEFAULT_WEB_DEFAULT:&str = "index.html";
+
+const DEFAULT_SERVER_ROOT:&str = "./server";
 
 const DEFAULT_DATA_ROOT:&str = "./data";
 
@@ -24,6 +26,8 @@ pub struct Props{
     pub web_root:String,
     pub web_default:String,
     
+    pub server_root:String,
+    
     pub data_root:String,
 
     pub log_folder_path:String,
@@ -33,7 +37,7 @@ pub struct Props{
 }
 
 impl Props{
-    fn new(port:i32, root:String, default:String, data_root:String, 
+    fn new(port:i32, root:String, default:String, server_root:String, data_root:String, 
         log_folder_path:String, log_level:String, log_to_console:bool, log_time_format:String,
         ) -> Props{
         return Props{
@@ -43,6 +47,8 @@ impl Props{
             web_root: root,
             web_default: default,
             
+            server_root: server_root,
+
             data_root: data_root,
 
             log_folder_path: log_folder_path,
@@ -70,7 +76,7 @@ lazy_static! {
 }
 
 pub fn get_props() -> Props{
-    return Props::new(get_port(), get_web_root(), get_web_default(), get_data_root(), 
+    return Props::new(get_port(), get_web_root(), get_web_default(), get_server_root(), get_data_root(), 
     get_log_folder_path(), get_log_level(), get_log_to_console(), get_log_time_format());
 }
 
@@ -102,6 +108,15 @@ pub fn get_web_default() -> String {
         web_default = web_default_prop.unwrap().trim();
     }
     return String::from(web_default);
+}
+
+pub fn get_server_root() -> String {
+    let srv_root_prop = PROPS.get("server.root");
+    let mut srv_root = DEFAULT_SERVER_ROOT;
+    if !srv_root_prop.is_none(){
+        srv_root = srv_root_prop.unwrap().trim();
+    }
+    return String::from(srv_root);
 }
 
 pub fn get_data_root() -> String {

@@ -13,7 +13,7 @@ use log::*;
 use futures_util::future;
 use futures_util::stream::TryStreamExt;
 
-use hyper::{Body, Request, Response, Server, StatusCode, HeaderMap};
+use hyper::{Body, Request, Response, Server, StatusCode, HeaderMap, header::HeaderValue};
 use hyper::service::{make_service_fn, service_fn};
 use hyper_staticfile::Static;
 use hyper::server::conn::AddrStream;
@@ -34,7 +34,7 @@ use strings::StringUtils;
 use props::Props;
 
 const ADMIN_ROUTE:&str = "/_gale";
-const RHAI_SCRIPT_EXTN:&str = ".rhai";
+//const RHAI_SCRIPT_EXTN:&str = ".rhai";
 const JS_SCRIPT_EXTN:&str = ".js";
 const F_SLASH:&str = "/";
 const DOT:&str = ".";
@@ -115,7 +115,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             Err(_e) => {
                 if req_path.contains(ADMIN_ROUTE){
                     is_admin = true;
-                }else if Path::new(&(props.web_root.clone() + req_path + JS_SCRIPT_EXTN)).exists(){
+                }else if Path::new(&(props.server_root.clone() + req_path + JS_SCRIPT_EXTN)).exists(){
                     is_js_script = true;
                 }/*else if Path::new(&(props.web_root.clone() + req_path + RHAI_SCRIPT_EXTN)).exists(){
                     is_rhai_script = true;
@@ -125,7 +125,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
     }else{
         if req_path.to_lowercase().contains(ADMIN_ROUTE){
             is_admin = true;
-        }else if req_path.to_lowercase().contains(JS_SCRIPT_EXTN){
+        }/*else if req_path.to_lowercase().contains(JS_SCRIPT_EXTN){
             error!("Error serving request for path: {}", req_path);
             let mut response = Response::default();
             *response.status_mut() = StatusCode::FORBIDDEN;
@@ -135,7 +135,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             let mut response = Response::default();
             *response.status_mut() = StatusCode::FORBIDDEN;
             return Ok(response);
-        }
+        }*/
     }
 
     let stime = SystemTime::now();
@@ -150,12 +150,30 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
             }else{
                 default_uri = format!("{}/{}", req_path, props.web_default);
             }
+            let mut scheme_opt = uri.scheme_str();
+            if scheme_opt.is_none(){
+                scheme_opt = Some("http");
+            }
+
+            let query_opt = uri.query();
+
+            let mut host_opt = uri.host();
+            if host_opt.is_none(){
+                host_opt = Some("localhost");
+            }
+
+            let redir_url:String;
+            if query_opt.is_some(){
+                redir_url = format!("{}://{}:{}{}?{}", scheme_opt.unwrap(), host_opt.unwrap(), props.net_port, default_uri, query_opt.unwrap());
+            }else{
+                redir_url = format!("{}://{}:{}{}", scheme_opt.unwrap(), host_opt.unwrap(), props.net_port, default_uri);
+            }
             
-            let request = Request::get(default_uri)
-                    .body(())
-                    .unwrap();
-            debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
-            return static_.clone().serve(request).await;
+            let mut response = Response::default();
+            let hmut = response.headers_mut();
+            hmut.insert("location", HeaderValue::from_bytes(redir_url.as_bytes()).unwrap());
+            *response.status_mut() = StatusCode::TEMPORARY_REDIRECT;
+            return Ok(response);
         },
         req_path if is_admin =>{
             //process gale admin

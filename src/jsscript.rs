@@ -30,7 +30,7 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         }
     }
     
-    let file_name = props.web_root.clone() + &req_data.path.clone() + SCRIPT_EXTN;
+    let file_name = props.server_root.clone() + &req_data.path.clone() + SCRIPT_EXTN;
     let fslashidx = file_name.as_str().rfind("/").unwrap();
     let script_path = &file_name[..fslashidx];
    
@@ -60,6 +60,7 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
 
     //Adding gale object
     let robj = engine.create_object();
+    robj.set("sr", props.server_root.clone()).unwrap();
     robj.set("wr", props.web_root.clone()).unwrap();
     robj.set("dr", props.data_root.clone()).unwrap();
     robj.set("csp", script_path).unwrap();
@@ -294,8 +295,8 @@ fn require(inv: Invocation) -> Result<Value, DuccError>{
 
     let robj:Object = engine.globals().get("_gale").unwrap();
     
-    let webroot:String = robj.get("wr").unwrap();
-    let rwpath = RelativePath::new(webroot.as_str());
+    let srvroot:String = robj.get("sr").unwrap();
+    let rwpath = RelativePath::new(srvroot.as_str());
     let wpath = rwpath.to_path(env::current_dir().unwrap().to_str().unwrap());
     let wpathres = fs::canonicalize(wpath.clone());
     if wpathres.is_err(){
