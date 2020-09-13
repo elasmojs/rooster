@@ -4,6 +4,17 @@
 A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB in size with zero dependencies.
 
 # Announcements
+## Sep 2020
+- Name change from Rooster JS to Gale JS
+- Script support
+  - Script API now has a good base of frequently used functions
+    - File IO
+    - Zip IO
+    - Crypto 
+    - Encoding 
+    - HTTP (GET, POST, POST Multipart)
+    - Web scraping
+    - Utils (Random, UUID)
 ## Aug 2020
 - Script Support
   - Gale now has a very basic JS server script support
