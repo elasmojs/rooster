@@ -1,6 +1,6 @@
 <img src="./web/rooster.png" href="http://icons8.com/" alt="Gale Application Server" width="128"/>
 
-# Gale
+# Gale JS
 NOT READY FOR PRODUCTION YET
 A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB in size with zero dependencies.
 
