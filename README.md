@@ -22,6 +22,7 @@ A small footprint, batteries included application server built with Rust. Gale J
   - It can load and serve script files including external libraries such as Moment JS, Math JS and more.
   - Examples can be found in the test repository [here](https://github.com/elasmojs/gale-test)
 
+# Getting Started
 ## Downloads
 [Windows 32 bit](./dist/gale-win32.exe)
 
