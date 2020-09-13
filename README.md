@@ -1,4 +1,4 @@
-<img src="./webroot/rooster.png" href="http://icons8.com/" alt="Gale Application Server" width="128"/>
+<img src="./web/rooster.png" href="http://icons8.com/" alt="Gale Application Server" width="128"/>
 
 # Gale
 NOT READY FOR PRODUCTION YET
