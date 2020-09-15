@@ -97,6 +97,26 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     request.set("query", req_data.query.clone()).unwrap();
     request.set("body", req_data.body.clone()).unwrap();
     request.set("isMultipart", req_data.is_multipart).unwrap();
+
+    let parts_obj = engine.create_object();
+    for (field, value) in req_data.clone().fields{
+        let file_obj = engine.create_object();
+        file_obj.set("name", field.clone()).unwrap();
+        file_obj.set("text", value.clone()).unwrap();
+        file_obj.set("isText", true).unwrap();
+        parts_obj.set(field, file_obj).unwrap();
+    }
+
+    for (name, file) in req_data.clone().files{
+        let file_obj = engine.create_object();
+        file_obj.set("name", file.name).unwrap();
+        file_obj.set("fileName", file.file_name).unwrap();
+        file_obj.set("isText", false).unwrap();
+        file_obj.set("contentType", file.content_type).unwrap();
+        file_obj.set("data", engine.create_bytes(&file.file_content).unwrap()).unwrap();
+        parts_obj.set(name, file_obj).unwrap();
+    }
+    request.set("parts", parts_obj).unwrap();
     
     let response = engine.create_object();
     response.set("headers", engine.create_object()).unwrap();

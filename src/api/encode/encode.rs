@@ -9,6 +9,10 @@ impl Base64{
         return base64::encode(input);
     }
 
+    pub fn encode_bytes(input:Vec<u8>) -> String{
+        return base64::encode(input);
+    }
+
     pub fn decode(input:String) -> Option<String>{
         let res = base64::decode(input);
         if res.is_ok(){

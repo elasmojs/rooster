@@ -17,6 +17,7 @@ pub fn load(engine:&Ducc) -> bool{
 
     let base64 = engine.create_object();
     base64.set("encode", engine.create_function(b64_encode)).unwrap();
+    base64.set("encodeBytes", engine.create_function(b64_encode_bytes)).unwrap();
     base64.set("decode", engine.create_function(b64_decode)).unwrap();
     
     let urlencode = engine.create_object();
@@ -41,6 +42,25 @@ pub fn b64_encode(inv: Invocation) -> Result<Value, DuccError>{
             return Ok(Value::String(engine.create_string(Base64::encode(input).as_str()).unwrap()));
         }else{
             error!("Invalid argument for base64 encode, expected string");
+            return Ok(Value::Null);    
+        }
+    }else{
+        error!("Invalid argument for base64 encode, expected 1 argument");
+        return Ok(Value::Null);
+    }
+}
+
+pub fn b64_encode_bytes(inv: Invocation) -> Result<Value, DuccError>{
+    let engine = inv.ducc;
+    let args = inv.args;
+    if args.len() == 1{
+        let input_str = args.get(0);
+        if input_str.is_bytes(){
+            let input = input_str.as_bytes().unwrap().to_vec();
+            let encoded = Base64::encode_bytes(input);
+            return Ok(Value::String(engine.create_string(encoded.as_str()).unwrap()));
+        }else{
+            error!("Invalid argument for base64 encode, expected byte array");
             return Ok(Value::Null);    
         }
     }else{
