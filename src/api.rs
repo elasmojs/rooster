@@ -1,5 +1,6 @@
 use ducc::{Ducc, Object, Value};
 
+mod props;
 mod fs;
 mod uuid;
 mod rnd;
@@ -9,6 +10,7 @@ mod zip;
 mod httpio;
 mod html;
 
+use props::load as loadprops;
 use fs::load as loadfs;
 use self::uuid::load as loaduuid;
 use rnd::load as loadrnd;
@@ -19,6 +21,7 @@ use self::httpio::load as loadhttp;
 use self::html::{load as loadhtml, set_user_data as html_user_data};
 
 pub const API_KEY:&str = "api";
+pub const PROPS_API:&str = "props";
 pub const FILE_API:&str = "fs";
 pub const UUID_API:&str = "uuid";
 pub const RND_API:&str = "rnd";
@@ -47,6 +50,12 @@ pub fn load_core_api(name:&str, engine:&Ducc) -> bool{
     }
 
     match name{
+        PROPS_API => {
+            if !api.contains_key(PROPS_API).unwrap(){
+                loadprops(engine);
+            }            
+            return true;
+        },
         FILE_API => {
             if !api.contains_key(FILE_API).unwrap(){
                 loadfs(engine);
