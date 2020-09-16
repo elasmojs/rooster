@@ -10,5 +10,6 @@ var resp = {
     msg: msg
 }
 
+$g.response.status = 200;
 $g.response.headers["content-type"] = "application/json";
 $g.response.body = JSON.stringify(resp);

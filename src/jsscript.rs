@@ -15,6 +15,7 @@ use crate::props::Props;
 use crate::RequestData;
 use crate::api;
 
+const STATUS_CODE:&str = "status";
 const SCRIPT_EXTN:&str = ".js";
 const SERVER_ERROR:u16 = 500;
 
@@ -180,6 +181,14 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
                     let (key, value) = header.unwrap();
                     hmut.insert(HeaderName::from_bytes(key.as_bytes()).unwrap(), HeaderValue::from_str(value.as_str()).unwrap());
                 }
+            }
+        }
+
+        if resp.contains_key(STATUS_CODE).unwrap(){
+            let status:u16 = resp.get(STATUS_CODE).unwrap();
+            let status_res = StatusCode::from_u16(status);
+            if status_res.is_ok(){
+                *response.status_mut() = status_res.unwrap();
             }
         }
 
