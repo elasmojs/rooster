@@ -10,7 +10,7 @@ var resp = {
 if(req.isMultipart){
     var parts = req.parts;
     console.log(parts.length);
-    for(partName in parts){
+    for(var partName in parts){
         var part = parts[partName];
         if(!part.isText){
             part.data = encoder.base64.encodeBytes(part.data);

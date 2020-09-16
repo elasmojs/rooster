@@ -5,12 +5,12 @@ var resp = {
     "msg":""
 };
 
-var fpath = "testfolder";
-if (fs.createDir(fpath)){
-    if(fs.removeDir(fpath)){
-        fpath = "testfolder/nextfolder/superfolder";
-        if(fs.createDirAll(fpath)){
-            if(fs.removeDirAll("testfolder")){
+var fpath = "foldertest";
+if (fs.createDir(fs.WEB_SPACE, fpath)){
+    if(fs.removeDir(fs.WEB_SPACE, fpath)){
+        fpath = "foldertest/nextfolder/superfolder";
+        if(fs.createDirAll(fs.WEB_SPACE, fpath)){
+            if(fs.removeDirAll(fs.WEB_SPACE, "foldertest")){
                 resp.msg = "Successfully tested!";
             }else{
                 resp.code = 500;
