@@ -156,23 +156,12 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                 return static_.clone().serve(request).await;
             }else{
                 default_uri = format!("{}/", req_path);
-                let mut scheme_opt = uri.scheme_str();
-                if scheme_opt.is_none(){
-                    scheme_opt = Some("http");
-                }
-
                 let query_opt = uri.query();
-
-                let mut host_opt = uri.host();
-                if host_opt.is_none(){
-                    host_opt = Some("localhost");
-                }
-
                 let redir_url:String;
                 if query_opt.is_some(){
-                    redir_url = format!("{}://{}:{}{}?{}", scheme_opt.unwrap(), host_opt.unwrap(), props.net_port, default_uri, query_opt.unwrap());
+                    redir_url = format!("{}?{}", default_uri, query_opt.unwrap());
                 }else{
-                    redir_url = format!("{}://{}:{}{}", scheme_opt.unwrap(), host_opt.unwrap(), props.net_port, default_uri);
+                    redir_url = format!("{}", default_uri);
                 }
                 
                 let mut response = Response::default();
