@@ -8,8 +8,8 @@ A small footprint, batteries included application server built with Rust. Gale J
 # Announcements
 ## Sep 2020
 - Name change from Rooster JS to Gale JS
-- Script support
-  - Script API now has a good base of frequently used functions
+- Linux 64-bit binary added
+- Script API now has a good base of frequently used functions
     - File IO
     - Zip IO
     - Crypto
