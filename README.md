@@ -36,15 +36,21 @@ The following downloads are available.
 Just copy Gale executable to your web root folder and run!
 
 ### default mode
-- Your web root folder
-  - index.html
-  - gale.exe
+- Install folder  
+  - Your web root folder
+    - gale (default app)
+      - box (sandbox folder)
+      - index.html
+  - gale (executable)
   
 ### with customized configuration
-- Your web root folder
-  - index.html
-- gale.exe
-- gale.cfg
+- Install folder
+  - Your web root folder
+    - gale (default app)
+      - box (sandbox folder)
+      - index.html
+  - gale (executable)
+  - gale.cfg
 
 ## Custom Configuration
 Adding a gale.cfg file in the same folder as the gale.exe file can be used to modify the following properties
