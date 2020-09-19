@@ -1,5 +1,5 @@
 use std::path::Path;
-use std::fs::{create_dir, create_dir_all, remove_dir, remove_dir_all};
+use std::fs::{create_dir, create_dir_all, remove_dir, remove_dir_all, read_dir, DirEntry};
 
 use log::*;
 
@@ -62,6 +62,86 @@ impl FolderIO{
             return false;
         }
     }
+
+    pub fn list(folderpath:String) -> Option<Vec<DirEntry>>{
+        let dir_res = read_dir(folderpath.clone());
+        if dir_res.is_ok(){
+            let mut entry_vec:Vec<DirEntry> = Vec::new();
+            let dir = dir_res.unwrap();
+            for entry_res in dir{
+                if entry_res.is_ok(){
+                    let entry = entry_res.unwrap();
+                    let is_hidden = entry.file_name().to_str().unwrap().starts_with(".");
+                    if !is_hidden{
+                        entry_vec.push(entry);      
+                    }              
+                }
+            }
+            return Some(entry_vec);
+        }else{
+            error!("Could not read dir - {}", folderpath);
+            return None;
+        }
+    }
+
+    pub fn list_all(folderpath:String) -> Option<Vec<DirEntry>>{
+        let dir_res = read_dir(folderpath.clone());
+        if dir_res.is_ok(){
+            let mut entry_vec:Vec<DirEntry> = Vec::new();
+            let dir = dir_res.unwrap();
+            for entry_res in dir{
+                if entry_res.is_ok(){
+                    let entry = entry_res.unwrap();
+                    entry_vec.push(entry);              
+                }
+            }
+            return Some(entry_vec);
+        }else{
+            error!("Could not read dir - {}", folderpath);
+            return None;
+        }
+    }
+
+    pub fn list_files(folderpath:String) -> Option<Vec<DirEntry>>{
+        let dir_res = read_dir(folderpath.clone());
+        if dir_res.is_ok(){
+            let mut entry_vec:Vec<DirEntry> = Vec::new();
+            let dir = dir_res.unwrap();
+            for entry_res in dir{
+                if entry_res.is_ok(){
+                    let entry = entry_res.unwrap();
+                    if entry.metadata().unwrap().is_file(){
+                        entry_vec.push(entry);
+                    }         
+                }
+            }
+            return Some(entry_vec);
+        }else{
+            error!("Could not read dir - {}", folderpath);
+            return None;
+        }
+    }
+
+    pub fn list_dirs(folderpath:String) -> Option<Vec<DirEntry>>{
+        let dir_res = read_dir(folderpath.clone());
+        if dir_res.is_ok(){
+            let mut entry_vec:Vec<DirEntry> = Vec::new();
+            let dir = dir_res.unwrap();
+            for entry_res in dir{
+                if entry_res.is_ok(){
+                    let entry = entry_res.unwrap();
+                    if entry.metadata().unwrap().is_dir(){
+                        entry_vec.push(entry);
+                    }              
+                }
+            }
+            return Some(entry_vec);
+        }else{
+            error!("Could not read dir - {}", folderpath);
+            return None;
+        }
+    }
+
     
     fn log_error(err:String ){
         error!("Error: {}", err);

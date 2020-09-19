@@ -1,4 +1,5 @@
 use ducc::{Ducc, Object, Invocation, Value, Error as DuccError};
+use std::fs::{DirEntry};
 use log::*;
 
 mod fileio;
@@ -40,6 +41,11 @@ pub fn load(engine:&Ducc) -> bool{
     fileio.set("createDirAll", engine.create_function(folder_create_all)).unwrap();
     fileio.set("removeDir", engine.create_function(folder_remove)).unwrap();
     fileio.set("removeDirAll", engine.create_function(folder_remove_all)).unwrap();
+
+    fileio.set("list", engine.create_function(folder_list)).unwrap();
+    fileio.set("listAll", engine.create_function(folder_list_all)).unwrap();
+    fileio.set("listFiles", engine.create_function(folder_list_files)).unwrap();
+    fileio.set("listDirs", engine.create_function(folder_list_dirs)).unwrap();
 
     api.set(FILE_API, fileio).unwrap();
 
@@ -298,4 +304,142 @@ pub fn folder_remove_all(inv: Invocation) -> Result<Value, DuccError>{
         error!("Invalid argument, expected 2 arguments");
         return Ok(Value::Boolean(false));
     }
+}
+
+pub fn folder_list(inv: Invocation) -> Result<Value, DuccError> {
+    let engine = inv.ducc;
+    let args = inv.args;
+    if args.len() == 2{
+        let space_res = args.get(0);
+        let fpath_res = args.get(1);
+        if space_res.is_number() && fpath_res.is_string(){
+            let base_dir = get_base_dir(engine, space_res.as_number().unwrap() as u8);
+            let fpath = format!("{}/{}", base_dir, fpath_res.as_string().unwrap().to_string().unwrap());
+            
+            let entries_res = FolderIO::list(fpath.clone());
+            if entries_res.is_some(){
+                return get_entries_arr(engine, entries_res.unwrap());
+            }else{
+                error!("Error listing dir entries for: {}", fpath.clone());
+                return Ok(Value::Null);
+            }
+        }else{
+            error!("Invalid argument, expected number, string argument");
+            return Ok(Value::Null);    
+        }
+    }else{
+        error!("Invalid argument, expected 2 argument");
+        return Ok(Value::Null);
+    }
+}
+
+pub fn folder_list_all(inv: Invocation) -> Result<Value, DuccError> {
+    let engine = inv.ducc;
+    let args = inv.args;
+    if args.len() == 2{
+        let space_res = args.get(0);
+        let fpath_res = args.get(1);
+        if space_res.is_number() && fpath_res.is_string(){
+            let base_dir = get_base_dir(engine, space_res.as_number().unwrap() as u8);
+            let fpath = format!("{}/{}", base_dir, fpath_res.as_string().unwrap().to_string().unwrap());
+            
+            let entries_res = FolderIO::list_all(fpath.clone());
+            if entries_res.is_some(){
+                return get_entries_arr(engine, entries_res.unwrap());
+            }else{
+                error!("Error listing dir entries for: {}", fpath.clone());
+                return Ok(Value::Null);
+            }
+        }else{
+            error!("Invalid argument, expected number, string argument");
+            return Ok(Value::Null);    
+        }
+    }else{
+        error!("Invalid argument, expected 2 argument");
+        return Ok(Value::Null);
+    }
+}
+
+pub fn folder_list_files(inv: Invocation) -> Result<Value, DuccError> {
+    let engine = inv.ducc;
+    let args = inv.args;
+    if args.len() == 2{
+        let space_res = args.get(0);
+        let fpath_res = args.get(1);
+        if space_res.is_number() && fpath_res.is_string(){
+            let base_dir = get_base_dir(engine, space_res.as_number().unwrap() as u8);
+            let fpath = format!("{}/{}", base_dir, fpath_res.as_string().unwrap().to_string().unwrap());
+            
+            let entries_res = FolderIO::list_files(fpath.clone());
+            if entries_res.is_some(){
+                return get_entries_arr(engine, entries_res.unwrap());
+            }else{
+                error!("Error listing dir entries for: {}", fpath.clone());
+                return Ok(Value::Null);
+            }
+        }else{
+            error!("Invalid argument, expected number, string argument");
+            return Ok(Value::Null);    
+        }
+    }else{
+        error!("Invalid argument, expected 2 argument");
+        return Ok(Value::Null);
+    }
+}
+
+pub fn folder_list_dirs(inv: Invocation) -> Result<Value, DuccError> {
+    let engine = inv.ducc;
+    let args = inv.args;
+    if args.len() == 2{
+        let space_res = args.get(0);
+        let fpath_res = args.get(1);
+        if space_res.is_number() && fpath_res.is_string(){
+            let base_dir = get_base_dir(engine, space_res.as_number().unwrap() as u8);
+            let fpath = format!("{}/{}", base_dir, fpath_res.as_string().unwrap().to_string().unwrap());
+            
+            let entries_res = FolderIO::list_dirs(fpath.clone());
+            if entries_res.is_some(){
+                return get_entries_arr(engine, entries_res.unwrap());
+            }else{
+                error!("Error listing dir entries for: {}", fpath.clone());
+                return Ok(Value::Null);
+            }
+        }else{
+            error!("Invalid argument, expected number, string argument");
+            return Ok(Value::Null);    
+        }
+    }else{
+        error!("Invalid argument, expected 2 argument");
+        return Ok(Value::Null);
+    }
+}
+
+fn get_entries_arr(engine:&Ducc, entries: Vec<DirEntry>) -> Result<Value, DuccError>{
+    let entries_arr = engine.create_array();
+    for entry in entries{
+        let entry_obj = engine.create_object();
+        entry_obj.set("name", entry.file_name().to_str().unwrap()).unwrap();
+        let meta_res = entry.metadata();
+        if meta_res.is_ok(){
+            let meta = meta_res.unwrap();
+            entry_obj.set("isFile", meta.is_file()).unwrap();
+            entry_obj.set("isDir", meta.is_dir()).unwrap();
+            entry_obj.set("len", meta.len()).unwrap();
+            //entry_obj.set("permissions", meta.permissions()).unwrap();
+            //entry_obj.set("created", format!("{}", meta.created().unwrap().)).unwrap();
+            //entry_obj.set("accessed", format!("{}", meta.accessed().unwrap().)).unwrap();
+            //entry_obj.set("modified", format!("{}", meta.modified().unwrap().)).unwrap();
+        }else{
+            entry_obj.set("isFile", Value::Null).unwrap();
+            entry_obj.set("isDir", Value::Null).unwrap();
+            entry_obj.set("len", Value::Null).unwrap();
+            entry_obj.set("permissions", Value::Null).unwrap();
+            entry_obj.set("created", Value::Null).unwrap();
+            entry_obj.set("accessed", Value::Null).unwrap();
+            entry_obj.set("modified", Value::Null).unwrap();
+        }
+                            
+        entries_arr.push(entry_obj).unwrap();
+    }
+    return Ok(Value::Array(entries_arr));
 }
