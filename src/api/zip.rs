@@ -7,7 +7,9 @@ use zipio::Zip;
 
 pub const API_KEY:&str = "api";
 pub const GALE_KEY:&str = "_gale";
-pub const DATA_ROOT_KEY:&str = "dr"; 
+pub const WEB_ROOT_KEY:&str = "wr"; 
+pub const APP_KEY:&str = "app"; 
+pub const BOX:&str = "box";
 pub const ZIP_API:&str = "zip";
 
 pub fn load(engine:&Ducc) -> bool{
@@ -30,14 +32,15 @@ pub fn zip_create(inv: Invocation) -> Result<Value, DuccError>{
     let args = inv.args;
     if args.len() == 2{
         let robj:Object = engine.globals().get(GALE_KEY).unwrap();
-        let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
+        let web_root:String = robj.get(WEB_ROOT_KEY).unwrap();
+        let app_name:String = robj.get(APP_KEY).unwrap();
 
         let srcpath_res = args.get(0);
         let destpath_res = args.get(1);
 
         if srcpath_res.is_string() && destpath_res.is_string(){
-            let srcpath = format!("{}/{}", data_root, srcpath_res.as_string().unwrap().to_string().unwrap());
-            let destpath = format!("{}/{}", data_root, destpath_res.as_string().unwrap().to_string().unwrap());
+            let srcpath = format!("{}/{}/{}/{}", web_root, app_name, BOX, srcpath_res.as_string().unwrap().to_string().unwrap());
+            let destpath = format!("{}/{}/{}/{}", web_root, app_name, BOX, destpath_res.as_string().unwrap().to_string().unwrap());
             return Ok(Value::Boolean(Zip::create(srcpath, destpath)));
         }else{
             error!("Invalid argument for zip create, expected string");
@@ -54,14 +57,15 @@ pub fn zip_extract(inv: Invocation) -> Result<Value, DuccError>{
     let args = inv.args;
     if args.len() == 2{
         let robj:Object = engine.globals().get(GALE_KEY).unwrap();
-        let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
+        let web_root:String = robj.get(WEB_ROOT_KEY).unwrap();
+        let app_name:String = robj.get(APP_KEY).unwrap();
 
         let srcpath_res = args.get(0);
         let destpath_res = args.get(1);
 
         if srcpath_res.is_string() && destpath_res.is_string(){
-            let srcpath = format!("{}/{}", data_root, srcpath_res.as_string().unwrap().to_string().unwrap());
-            let destpath = format!("{}/{}", data_root, destpath_res.as_string().unwrap().to_string().unwrap());
+            let srcpath = format!("{}/{}/{}/{}", web_root, app_name, BOX, srcpath_res.as_string().unwrap().to_string().unwrap());
+            let destpath = format!("{}/{}/{}/{}", web_root, app_name, BOX, destpath_res.as_string().unwrap().to_string().unwrap());
             return Ok(Value::Boolean(Zip::extract(srcpath, destpath)));
         }else{
             error!("Invalid argument for zip create, expected string");

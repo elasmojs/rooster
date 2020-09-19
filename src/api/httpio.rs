@@ -9,7 +9,9 @@ use self::httpio::*;
 
 pub const API_KEY:&str = "api";
 pub const GALE_KEY:&str = "_gale";
-pub const DATA_ROOT_KEY:&str = "dr"; 
+pub const WEB_ROOT_KEY:&str = "wr"; 
+pub const APP_KEY:&str = "app";
+pub const BOX:&str = "box";
 pub const HTTP_API:&str = "http";
 
 pub fn load(engine:&Ducc) -> bool{
@@ -129,7 +131,8 @@ pub fn http_post_multipart(inv: Invocation) -> Result<Value, DuccError>{
     let args = inv.args;
     if args.len() == 3{
         let robj:Object = engine.globals().get(GALE_KEY).unwrap();
-        let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
+        let web_root:String = robj.get(WEB_ROOT_KEY).unwrap();
+        let app_name:String = robj.get(APP_KEY).unwrap();
 
         let url_res = args.get(0);
         let headers_res = args.get(1);
@@ -166,7 +169,7 @@ pub fn http_post_multipart(inv: Invocation) -> Result<Value, DuccError>{
                                     res = res.unwrap().write_text(name.as_string().unwrap().to_string().unwrap(), value.as_string().unwrap().to_string().unwrap());
                                 }else{
                                     //Add file part
-                                    let fpath = format!("{}/{}", data_root, value.as_string().unwrap().to_string().unwrap());
+                                    let fpath = format!("{}/{}/{}/{}", web_root, app_name, BOX, value.as_string().unwrap().to_string().unwrap());
                                     res = res.unwrap().write_file(name.as_string().unwrap().to_string().unwrap(), Path::new(fpath.as_str()));
                                 }
                                 if res.is_err(){

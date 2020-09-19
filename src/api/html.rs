@@ -14,7 +14,9 @@ use log::*;
 
 pub const API_KEY:&str = "api";
 pub const GALE_KEY:&str = "_gale";
-pub const DATA_ROOT_KEY:&str = "dr"; 
+pub const WEB_ROOT_KEY:&str = "wr";
+pub const APP_KEY:&str = "app";
+pub const BOX:&str = "box"; 
 pub const HTML_API:&str = "html";
 
 pub const HTML_REF_MAP:&str = "html_ref_map";
@@ -119,11 +121,12 @@ fn html_from_file(inv: Invocation) -> Result<Value, DuccError>{
     let args = inv.args;
     if args.len() == 1{
         let robj:Object = engine.globals().get(GALE_KEY).unwrap();
-        let data_root:String = robj.get(DATA_ROOT_KEY).unwrap();
+        let web_root:String = robj.get(WEB_ROOT_KEY).unwrap();
+        let app_name:String = robj.get(APP_KEY).unwrap();
 
         let fpath_res = args.get(0);
         if fpath_res.is_string(){
-            let fpath = format!("{}/{}", data_root, fpath_res.as_string().unwrap().to_string().unwrap());
+            let fpath = format!("{}/{}/{}/{}", web_root, app_name, BOX, fpath_res.as_string().unwrap().to_string().unwrap());
             let file = File::open(&fpath);
             if file.is_ok(){
                 let mut html_str = String::new();

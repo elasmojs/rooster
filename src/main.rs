@@ -2,6 +2,7 @@
 
 use std::time::SystemTime;
 use std::clone::Clone;
+use std::fs;
 use std::fs::{metadata};
 use std::io::{Cursor, Read, Error as IoError};
 use std::{net::SocketAddr, path::Path};
@@ -40,6 +41,8 @@ const F_SLASH:&str = "/";
 const DOT:&str = ".";
 const CONTENT_TYPE:&str = "content-type";
 const MULTI_PART_CONTENT_TYPE:&str = "multipart/form-data";
+const SAND_BOX:&str = "box";
+const GALE_ADMIN_APP:&str = "_gale";
 
 #[derive(Clone)]
 pub struct MPFile{
@@ -87,18 +90,42 @@ impl RequestData{
     }
 }
 
-
 async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Result<Response<Body>, IoError> {
     
     let uri = req.uri().clone();
-    let req_path = uri.path().clone();
+    let r_path = uri.path().clone();
     let query = match uri.query().clone(){
         Some(q) => String::from(q),
         None => String::from("")
     };
 
-    let last_slash_idx = String::from(req_path).last_index_of(F_SLASH) as usize;
-    let file_name = &req_path[last_slash_idx+1..];
+    let path_split = r_path.clone().split(F_SLASH);
+    let path_vec = path_split.clone().collect::<Vec<&str>>();
+    let path_str = path_vec.clone().join(F_SLASH);
+
+    //Set default app
+    let req_path:String;
+    let script_path:String;
+    let mut app_name:String = String::from(*path_vec.get(1).unwrap());
+    if app_name.len() == 0 || app_name.last_index_of(DOT) != -1{
+        app_name = format!("{}", props.default_app);
+        req_path = format!("/{}{}", props.default_app.clone(), r_path.clone());
+        script_path = format!("{}/{}/{}{}", props.web_root, props.default_app.clone(), SAND_BOX, r_path.clone());
+    }else{
+        let uri_str = path_str.replace(format!("/{}", app_name).as_str(), "");
+        if props.is_app(app_name.clone()){
+            req_path = String::from(path_str.clone());
+            script_path = format!("{}/{}/{}{}", props.web_root, app_name.clone(), SAND_BOX, uri_str.clone());
+        }else{
+            app_name = format!("{}", props.default_app);
+            req_path = format!("/{}{}", props.default_app.clone(), r_path.clone());
+            script_path = format!("{}/{}/{}{}", props.web_root, props.default_app.clone(), SAND_BOX, r_path.clone());
+        }
+    }
+    let f_path = format!("{}{}", props.web_root.clone(), req_path.clone());
+    
+    let file_name = *path_vec.clone().last().unwrap();
+    //let base_path = f_path.replace(file_name, "");
     let not_file = String::from(file_name).last_index_of(DOT) == -1;
     //let mut is_rhai_script = false;
     let mut is_js_script = false;
@@ -106,16 +133,16 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
     let mut is_admin = false; 
 
     if not_file{
-        match metadata(props.web_root.clone() + req_path){
+        match metadata(f_path.clone()){
             Ok(md) => {
                 if md.is_dir(){
                     is_folder = true;
                 }
             }
             Err(_e) => {
-                if req_path.contains(ADMIN_ROUTE){
+                if req_path.clone().contains(ADMIN_ROUTE){
                     is_admin = true;
-                }else if Path::new(&(props.server_root.clone() + req_path + JS_SCRIPT_EXTN)).exists(){
+                }else if Path::new(&(script_path.clone() + JS_SCRIPT_EXTN)).exists(){
                     is_js_script = true;
                 }/*else if Path::new(&(props.web_root.clone() + req_path + RHAI_SCRIPT_EXTN)).exists(){
                     is_rhai_script = true;
@@ -155,7 +182,7 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                 debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
                 return static_.clone().serve(request).await;
             }else{
-                default_uri = format!("{}/", req_path);
+                default_uri = format!("{}/", r_path.clone());
                 let query_opt = uri.query();
                 let redir_url:String;
                 if query_opt.is_some(){
@@ -173,17 +200,17 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         },
         req_path if is_admin =>{
             //process gale admin
-            info!("Serving admin request for path: {}", req_path);
-            let admin_resp = admin::process(req_path, props).await;
+            info!("Serving admin request for path: {}", req_path.clone());
+            let admin_resp = admin::process(req_path.clone().as_str(), props).await;
             debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
             return admin_resp;
         },
-        req_path if is_js_script =>{
+        _req_path if is_js_script =>{
             //process js script
-            info!("Serving script request for path: {}", req_path);
+            let path = format!("{}", r_path);
+            info!("Serving script request for path: {}", path);
             let method = req.method().clone().to_string();
             let headers = get_headers(req.headers().clone()).await;
-            let path = String::from(req_path);
 
             let mut is_multipart = false;
             let has_content_type = headers.contains_key(CONTENT_TYPE);
@@ -213,8 +240,8 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
                req_data.is_multipart = true;
                 get_parts(req, &mut req_data).await;
             }
-            let script_resp = jsscript::process(req_data, props).await;
-            debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
+            let script_resp = jsscript::process(req_data, props, script_path.clone(), app_name.clone(), String::from(file_name.clone())).await;
+            debug!("Time taken to serve {}: {} ms", path, stime.elapsed().unwrap().as_millis());
             return script_resp;
         },
         /* 
@@ -258,8 +285,18 @@ async fn process_request(req: Request<Body>, static_:Static, props: Props) -> Re
         */        
         _ => {
                 info!("Serving file request for path: {}", req_path);
-                let static_resp = static_.clone().serve(req).await;
-                debug!("Time taken to serve {}: {} ms", req_path, stime.elapsed().unwrap().as_millis());
+                let forbidden = format!("/{}/", SAND_BOX);
+                if req_path.to_lowercase().contains(forbidden.as_str()){
+                    warn!("Forbidden sandbox access from {} for {}", props.remote_addr, req_path);
+                    let mut response = Response::default();
+                    *response.status_mut() = StatusCode::NOT_FOUND;
+                    return Ok(response);
+                }
+                let request = Request::get(req_path.clone())
+                    .body(())
+                    .unwrap();
+                let static_resp = static_.clone().serve(request).await;
+                debug!("Time taken to serve {}: {} ms", req_path.clone(), stime.elapsed().unwrap().as_millis());
                 return static_resp;
         }
     }
@@ -360,10 +397,33 @@ async fn shutdown_signal() {
         .expect("failed to install CTRL+C signal handler");
 }
 
+async fn get_app_names(root:String) -> Vec<String>{
+    let dir_res = fs::read_dir(root.clone());
+    let mut name_vec:Vec<String> = Vec::new();
+    name_vec.push(String::from(GALE_ADMIN_APP));
+    if dir_res.is_ok(){
+        let dir = dir_res.unwrap();
+        for entry_res in dir{
+            if entry_res.is_ok(){
+                let entry = entry_res.unwrap();
+                if entry.metadata().unwrap().is_dir(){
+                    let is_hidden = entry.file_name().to_str().unwrap().starts_with(".");
+                    if !is_hidden{
+                        name_vec.push(String::from(entry.file_name().to_str().unwrap()));
+                    }
+                }
+            }
+        }
+    }
+    return name_vec;
+}
+
 #[tokio::main]
 async fn main() {
     let mut props = props::get_props();
     logger::init_log(props.clone());
+
+    props.apps = get_app_names(props.web_root.clone()).await;
 
     let net_port = props.net_port.clone();
 

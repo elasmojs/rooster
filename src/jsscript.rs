@@ -17,11 +17,10 @@ use crate::api;
 
 const STATUS_CODE:&str = "status";
 const SCRIPT_EXTN:&str = ".js";
+const SAND_BOX:&str = "box";
 const SERVER_ERROR:u16 = 500;
 
-pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>, IoError>{
-    //TODO: process script
-    
+pub async fn process(req_data:RequestData, props:Props, path:String, app_name:String, script_name:String) -> Result<Response<Body>, IoError>{
     if req_data.is_multipart{
         for (key, val) in req_data.fields.clone(){
             info!("Field: {} - {}", key, val);
@@ -31,13 +30,14 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
         }
     }
     
-    let file_name = props.server_root.clone() + &req_data.path.clone() + SCRIPT_EXTN;
-    let fslashidx = file_name.as_str().rfind("/").unwrap();
-    let script_path = &file_name[..fslashidx];
+    //let file_path = format!("{}{}", base_path, script_name);
+    let full_path = path.clone() + SCRIPT_EXTN;
+    //let fslashidx = full_path.as_str().rfind("/").unwrap();
+    let script_path = path.replace(&script_name, "");
    
-    let mut script_file = match File::open(&file_name) {
+    let mut script_file = match File::open(&full_path) {
         Err(err) => {
-            error!("Could not open script file for path: {}, Error - {}", file_name, err);
+            error!("Could not open script file for path: {}, Error - {}", full_path, err);
             let mut response = Response::default();
             *response.status_mut() = StatusCode::NOT_FOUND;
             return Ok(response);
@@ -48,7 +48,7 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     let mut contents = String::new();
 
     if let Err(err) = script_file.read_to_string(&mut contents) {
-        let errmsg = format!("Could not read script file for path: {}, Error - {}", file_name, err);
+        let errmsg = format!("Could not read script file for path: {}, Error - {}", full_path, err);
         error!("{}", errmsg);
         return get_server_error_response(errmsg);
     }
@@ -59,12 +59,13 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     //Adding console object
     init_console(&engine);
 
+    let server_root = format!("{}/{}/{}", props.web_root, app_name, SAND_BOX);
     //Adding gale object
     let robj = engine.create_object();
-    robj.set("sr", props.server_root.clone()).unwrap();
     robj.set("wr", props.web_root.clone()).unwrap();
-    robj.set("dr", props.data_root.clone()).unwrap();
+    robj.set("sr", server_root.clone()).unwrap();
     robj.set("csp", script_path).unwrap();
+    robj.set("app", app_name).unwrap();
     engine.globals().set("_gale", robj).unwrap();
 
     //Adding module import
@@ -130,7 +131,7 @@ pub async fn process(req_data:RequestData, props:Props) -> Result<Response<Body>
     engine.globals().set("gale", robj).unwrap();
     
     debug!("Request: \r\n{}", get_request_data(req_data.clone()));
-    let evalresult:Result<Value, DuccError> = engine.exec(contents.as_str(), Some(&file_name), ExecSettings::default());
+    let evalresult:Result<Value, DuccError> = engine.exec(contents.as_str(), Some(&full_path), ExecSettings::default());
     if evalresult.is_ok(){
         let gale_res = engine.globals().get("$g");
         if gale_res.is_err(){
@@ -246,7 +247,7 @@ fn add_console_log_fn(engine:&Ducc){
             }else if v.is_object(){
                 info!("{:?}", v.as_object().unwrap());
             }else{
-                info!("{:?}", v.as_string());
+                info!("{:?}", v);
             }
         }
         Ok(Value::Number(0.0))
@@ -329,7 +330,7 @@ fn require(inv: Invocation) -> Result<Value, DuccError>{
     let wpath = rwpath.to_path(env::current_dir().unwrap().to_str().unwrap());
     let wpathres = fs::canonicalize(wpath.clone());
     if wpathres.is_err(){
-        error!("Web root not found!");
+        error!("Path not found: {}", srvroot);
         return Ok(Value::Null);
     }
 

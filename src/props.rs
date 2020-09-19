@@ -8,9 +8,7 @@ const DEFAULT_PORT:u16 = 7070;
 const DEFAULT_WEB_ROOT:&str = "./web";
 const DEFAULT_WEB_DEFAULT:&str = "index.html";
 
-const DEFAULT_SERVER_ROOT:&str = "./server";
-
-const DEFAULT_DATA_ROOT:&str = "./data";
+const DEFAULT_APP:&str = "gale";
 
 const DEFAULT_LOG_LEVEL:&str = "ERROR";
 const DEFAULT_LOG_FOLDER_PATH:&str = "./logs";
@@ -26,9 +24,8 @@ pub struct Props{
     pub web_root:String,
     pub web_default:String,
     
-    pub server_root:String,
-    
-    pub data_root:String,
+    pub default_app:String,
+    pub apps:Vec<String>,
 
     pub log_folder_path:String,
     pub log_level:String,
@@ -37,7 +34,7 @@ pub struct Props{
 }
 
 impl Props{
-    fn new(port:i32, root:String, default:String, server_root:String, data_root:String, 
+    fn new(port:i32, root:String, default:String, default_app:String,  
         log_folder_path:String, log_level:String, log_to_console:bool, log_time_format:String,
         ) -> Props{
         return Props{
@@ -47,15 +44,23 @@ impl Props{
             web_root: root,
             web_default: default,
             
-            server_root: server_root,
-
-            data_root: data_root,
+            default_app: default_app,
+            apps: Vec::new(),
 
             log_folder_path: log_folder_path,
             log_level: log_level,
             log_to_console: log_to_console,
             log_time_format: log_time_format
         };
+    }
+
+    pub fn is_app(&self, name: String) -> bool{
+        for app_name in self.apps.clone(){
+            if app_name.eq(&name){
+                return true;
+            }
+        }
+        return false;
     }
 }
 
@@ -76,7 +81,7 @@ lazy_static! {
 }
 
 pub fn get_props() -> Props{
-    return Props::new(get_port(), get_web_root(), get_web_default(), get_server_root(), get_data_root(), 
+    return Props::new(get_port(), get_web_root(), get_web_default(), get_default_app(), 
     get_log_folder_path(), get_log_level(), get_log_to_console(), get_log_time_format());
 }
 
@@ -110,22 +115,13 @@ pub fn get_web_default() -> String {
     return String::from(web_default);
 }
 
-pub fn get_server_root() -> String {
-    let srv_root_prop = PROPS.get("server.root");
-    let mut srv_root = DEFAULT_SERVER_ROOT;
-    if !srv_root_prop.is_none(){
-        srv_root = srv_root_prop.unwrap().trim();
+pub fn get_default_app() -> String {
+    let default_app_prop = PROPS.get("app.default");
+    let mut default_app = DEFAULT_APP;
+    if !default_app_prop.is_none(){
+        default_app = default_app_prop.unwrap().trim();
     }
-    return String::from(srv_root);
-}
-
-pub fn get_data_root() -> String {
-    let data_root_prop = PROPS.get("data.root");
-    let mut data_root = DEFAULT_DATA_ROOT;
-    if !data_root_prop.is_none(){
-        data_root = data_root_prop.unwrap().trim();
-    }
-    return String::from(data_root);
+    return String::from(default_app);
 }
 
 pub fn get_log_folder_path() -> String {

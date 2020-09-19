@@ -10,12 +10,11 @@ use folderio::FolderIO;
 pub const API_KEY:&str = "api";
 pub const GALE_KEY:&str = "_gale";
 pub const WEB_ROOT_KEY:&str = "wr";
-pub const SERVER_ROOT_KEY:&str = "sr";
-pub const DATA_ROOT_KEY:&str = "dr"; 
+pub const APP_KEY:&str = "app";
 pub const FILE_API:&str = "fs";
+pub const BOX:&str = "box";
 
-pub const DATA_SPACE:u8 = 0;
-pub const SERVER_SPACE:u8 = 1;
+pub const BOX_SPACE:u8 = 1;
 pub const WEB_SPACE:u8 = 2;
 
 pub fn load(engine:&Ducc) -> bool{
@@ -24,9 +23,8 @@ pub fn load(engine:&Ducc) -> bool{
     let api = api_obj.as_object().unwrap();
 
     let fileio = engine.create_object();
-    fileio.set("DATA_SPACE", DATA_SPACE).unwrap();
-    fileio.set("SERVER_SPACE", SERVER_SPACE).unwrap();
-    fileio.set("WEB_SPACE", WEB_SPACE).unwrap();
+    fileio.set("BOX", BOX_SPACE).unwrap();
+    fileio.set("WEB", WEB_SPACE).unwrap();
 
     fileio.set("create", engine.create_function(file_create)).unwrap();
     fileio.set("writeText", engine.create_function(file_write_text)).unwrap();
@@ -50,11 +48,12 @@ pub fn load(engine:&Ducc) -> bool{
 
 fn get_base_dir(engine:&Ducc, space:u8) -> String{
     let robj:Object = engine.globals().get(GALE_KEY).unwrap();
+    let web_root:String = robj.get(WEB_ROOT_KEY).unwrap();
+    let app_name:String = robj.get(APP_KEY).unwrap();
     match space{
-        DATA_SPACE => robj.get(DATA_ROOT_KEY).unwrap(),
-        SERVER_SPACE => robj.get(SERVER_ROOT_KEY).unwrap(),
-        WEB_SPACE => robj.get(WEB_ROOT_KEY).unwrap(),
-        _=> robj.get(DATA_ROOT_KEY).unwrap()
+        BOX_SPACE => format!("{}/{}/{}", web_root, app_name, BOX),
+        WEB_SPACE => format!("{}/{}", web_root, app_name),
+        _=> format!("{}/{}/{}", web_root, app_name, BOX)
     }
 }
 
