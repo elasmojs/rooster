@@ -1,13 +1,13 @@
 var fs = require('fs');
 
-var img = fs.read('spotlight.png');
+var img = fs.read(fs.BOX, 'spotlight.png');
 if(img != null){
-    if(fs.create('out.png')){
-        var copyRes = fs.write('out.png', img);
+    if(fs.create(fs.BOX, 'out.png')){
+        var copyRes = fs.write(fs.BOX, 'out.png', img);
         if(copyRes){
-            var imgCopy = fs.read('out.png');
+            var imgCopy = fs.read(fs.BOX, 'out.png');
             if(imgCopy != null){
-                fs.remove('out.png');
+                fs.remove(fs.BOX, 'out.png');
                 $g.response.headers["content-type"] = "image/png";
                 $g.response.body = imgCopy;
             }else{

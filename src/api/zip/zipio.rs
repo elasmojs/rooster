@@ -59,8 +59,9 @@ impl Zip{
                                 #[cfg(unix)]
                                 {
                                     use std::os::unix::fs::PermissionsExt;
+                                    use std::fs;
                                     if let Some(mode) = zfile.unix_mode(){
-                                        if Err(e) = fs::set_permissions(&outfilepath, fs::Permissions::from_mode(mode)){
+                                        if let Err(e) = fs::set_permissions(&outfilepath, fs::Permissions::from_mode(mode)){
                                             //TODO clear existing entries inside the output folder
                                             error!("Error setting permissions from zip file");
                                             return false;
