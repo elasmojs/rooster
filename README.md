@@ -12,11 +12,26 @@ A small footprint, batteries included application server built with Rust. Gale J
   - Script API now has a good base of frequently used functions
     - File IO
     - Zip IO
-    - Crypto 
-    - Encoding 
-    - HTTP (GET, POST, POST Multipart)
-    - Web scraping
-    - Utils (Random, UUID)
+    - Crypto
+        - MD5
+        - SHA2
+        - SHA3
+    - Properties
+    - Encoding
+      - Base 64 
+      - URL Encoding
+    - HTTP
+      - GET
+      - POST 
+      - POST Multipart
+    - Web/HTML Scraping
+      - String
+      - File
+      - URL
+    - Utils
+      - Random
+      - UUID
+
 ## Aug 2020
 - Script Support
   - Gale now has a very basic JS server script support
