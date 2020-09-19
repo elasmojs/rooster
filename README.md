@@ -1,8 +1,9 @@
 <img src="./web/gale/rooster.png" href="http://icons8.com/" alt="Gale Application Server" width="128"/>
 
-# Gale JS
-NOT READY FOR PRODUCTION YET
-A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB in size with zero dependencies.
+# Gale JS - Application Server
+Note: NOT READY FOR PRODUCTION YET
+
+A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB for Windows and ~11 MB for Linux with zero dependencies.
 
 # Announcements
 ## Sep 2020
@@ -33,17 +34,6 @@ The following downloads are available.
 | Mac  | Coming soon   |   |
 
 ## Installation
-Just copy Gale executable to your web root folder and run!
-
-### default mode
-- Install folder  
-  - Your web root folder
-    - gale (default app)
-      - box (sandbox folder)
-      - index.html
-  - gale (executable)
-  
-### with customized configuration
 - Install folder
   - Your web root folder
     - gale (default app)
@@ -53,7 +43,7 @@ Just copy Gale executable to your web root folder and run!
   - gale.cfg
 
 ## Custom Configuration
-Adding a gale.cfg file in the same folder as the gale.exe file can be used to modify the following properties
+Adding a gale.cfg file in the same folder as the gale excutable file can be used to modify the following properties
 
 [Sample Configuration](gale.cfg)
 
