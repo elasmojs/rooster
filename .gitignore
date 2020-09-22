@@ -2,4 +2,4 @@
 /logs
 /data
 /conf/server.crt
-/conf/server.pkey
+/conf/server.key
