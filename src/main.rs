@@ -7,7 +7,12 @@ use std::fs::{metadata};
 use std::io::{Cursor, Read, Error as IoError};
 use std::{net::SocketAddr, path::Path};
 use std::collections::HashMap;
-use std::str;
+
+use std::{str, fmt};
+use std::error::Error;
+use std::convert::Infallible;
+use std::{io, sync};
+use std::pin::Pin;
 
 use log::*;
 
@@ -18,6 +23,18 @@ use hyper::{Body, Request, Response, Server, StatusCode, HeaderMap, header::Head
 use hyper::service::{make_service_fn, service_fn};
 use hyper_staticfile::Static;
 use hyper::server::conn::AddrStream;
+
+use futures_util::{
+    future::TryFutureExt,
+    stream::{Stream, StreamExt},
+};
+
+use core::task::{Context, Poll};
+
+use tokio::net::{TcpListener, TcpStream};
+use tokio_rustls::server::TlsStream;
+use tokio_rustls::TlsAcceptor;
+use rustls::internal::pemfile;
 
 use multipart::server::{Multipart};
 
@@ -397,7 +414,7 @@ async fn shutdown_signal() {
         .expect("failed to install CTRL+C signal handler");
 }
 
-async fn get_app_names(root:String) -> Vec<String>{
+fn get_app_names(root:String) -> Vec<String>{
     let dir_res = fs::read_dir(root.clone());
     let mut name_vec:Vec<String> = Vec::new();
     name_vec.push(String::from(GALE_ADMIN_APP));
@@ -418,12 +435,40 @@ async fn get_app_names(root:String) -> Vec<String>{
     return name_vec;
 }
 
-#[tokio::main]
-async fn main() {
-    let mut props = props::get_props();
+
+fn main() {
+    let props = props::get_props();
     logger::init_log(props.clone());
 
-    props.apps = get_app_names(props.web_root.clone()).await;
+    if props.net_http_enabled{
+        std::thread::spawn(||{
+            init_http();
+        });
+        let website_url = format!("http://localhost:{}", props.net_port);
+        let _browser_result = webbrowser::open(&website_url);
+    }else{
+        info!("HTTP service is not enabled, check 'net.http.enabled' property in gale.cfg");
+    }
+
+    if props.net_ssl_enabled{
+        std::thread::spawn(||{
+            init_ssl();
+        });
+    }else{
+        info!("HTTPS service is not enabled, to use set 'net.ssl.enabled' to 'true' in gale.cfg");
+    }
+
+    if props.net_http_enabled || props.net_ssl_enabled{
+        loop{
+            std::thread::sleep(std::time::Duration::from_millis(3000));
+        }
+    }
+}
+
+#[tokio::main]
+async fn init_http(){
+    let mut props = props::get_props();
+    props.apps = get_app_names(props.web_root.clone());
 
     let net_port = props.net_port.clone();
 
@@ -439,12 +484,207 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], net_port as u16));
     let server = Server::bind(&addr).serve(service);
     let graceful = server.with_graceful_shutdown(shutdown_signal());
-    info!("Gale JS server started at => http://localhost:{}", net_port);
-
-    let website_url = format!("http://localhost:{}", net_port);
-    let _browser_result = webbrowser::open(&website_url);
+    let start_msg = format!("Gale JS server started at => http://localhost:{}", net_port);
+    info!("{}", start_msg);
+    println!("{}", start_msg);
 
     if let Err(e) = graceful.await {
         eprintln!("server error: {}", e);
     } 
+}
+
+#[tokio::main]
+async fn init_ssl(){
+    let mut props = props::get_props();
+    props.apps = get_app_names(props.web_root.clone());
+    let net_ssl_port = props.net_ssl_port.clone();
+    let net_ssl_cert = props.net_ssl_cert.clone();
+    let net_ssl_pkey = props.net_ssl_pkey.clone();
+
+    let static_ = Static::new(Path::new(&props.web_root));
+
+    let service = make_service_fn(|conn:&TlsStream<TcpStream>| {
+        let (stream, _session) = conn.get_ref();
+        let remote_res = stream.peer_addr();
+        if remote_res.is_ok(){
+            let socket_addr = remote_res.unwrap();
+            props.remote_addr = socket_addr.ip().to_string();
+        }else{
+            props.remote_addr = "".to_string();
+        }
+        let static_ = static_.clone();
+        let props_:Props = props.clone();
+        async { Ok::<_, Infallible>(service_fn(move |req| process_request(req, static_.clone(), props_.clone()))) }
+    });
+
+    
+    let addr = format!("0.0.0.0:{}", net_ssl_port);
+
+    // Build TLS configuration.
+    let tls_cfg_opt = {
+        // Load public certificate.
+        let certs_res = load_certs(net_ssl_cert.as_str());
+        if certs_res.is_err(){
+            error!("Could not load ssl certificate: {}, error: {}", net_ssl_cert, certs_res.unwrap_err());
+            None
+        }else{
+            let certs = certs_res.unwrap();
+
+            // Load private key.
+            let key_res = load_private_key(net_ssl_pkey.as_str());
+            if key_res.is_err(){
+                error!("Could not load ssl pkey: {}, error: {}", net_ssl_pkey, key_res.unwrap_err());
+                None
+            }else{
+                let key = key_res.unwrap();
+
+                // Do not use client certificate authentication.
+                let mut cfg = rustls::ServerConfig::new(rustls::NoClientAuth::new());
+                // Select a certificate to use.
+                let res = cfg.set_single_cert(certs, key)
+                    .map_err(|e| error(format!("{}", e)));
+                if res.is_err(){
+                    error!("Could not init ssl certificate, error: {}", res.unwrap_err());
+                    None
+                }else{
+                    // Configure ALPN to accept HTTP/2, HTTP/1.1 in that order.
+                    cfg.set_protocols(&[b"h2".to_vec(), b"http/1.1".to_vec()]);
+                    Some(sync::Arc::new(cfg))
+                }
+            }                
+        }
+    };
+    let tls_cfg = tls_cfg_opt.unwrap();
+
+    // Create a TCP listener via tokio.
+    let tcp_res = TcpListener::bind(&addr).await;
+    if tcp_res.is_err(){
+        error!("Could not bind TCP socket, error: {}", tcp_res.unwrap_err());
+        return;
+    }
+    let mut tcp = tcp_res.unwrap();
+    let tls_acceptor = TlsAcceptor::from(tls_cfg);
+    // Prepare a long-running future stream to accept and serve cients.
+    
+    let incoming_tls_stream = tcp
+        .incoming()
+        .map_err(|err|{
+            warn!("SSL Client Incoming Error: {}", err);
+            SSLError::from(err)
+        })
+        .and_then(move |s|{
+            tls_acceptor.accept(s).map_err(|err|{
+                warn!("SSL Client Accept Error: {}", err);
+                SSLError::from(err)
+            })
+        })
+        .boxed();
+    
+    let server = Server::builder(HyperAcceptor {
+        acceptor: incoming_tls_stream,
+    })
+    .serve(service);
+
+    let start_msg = format!("Gale JS server started at => https://localhost:{}", net_ssl_port);
+    info!("{}", start_msg);
+    println!("{}", start_msg);
+
+    
+    if let Err(e) = server.await {
+        eprintln!("server error: {}", e);
+    }
+}
+
+struct HyperAcceptor<'a> {
+    acceptor: Pin<Box<dyn Stream<Item = Result<TlsStream<TcpStream>, SSLError>> + 'a>>,
+}
+
+impl hyper::server::accept::Accept for HyperAcceptor<'_> {
+    type Conn = TlsStream<TcpStream>;
+    type Error = SSLError;
+
+    fn poll_accept(
+        mut self: Pin<&mut Self>,
+        cx: &mut Context,
+    ) -> Poll<Option<Result<Self::Conn, Self::Error>>> {
+        let poll_result = Pin::new(&mut self.acceptor).poll_next(cx);
+        match poll_result{
+            Poll::Ready(prslt) => {
+                match prslt{
+                    Some(res) => {
+                        if res.is_err(){
+                            warn!("SSL Client Error: {}", res.unwrap_err());
+                            Pin::new(&mut self.acceptor).poll_next(cx)
+                        }else{
+                            Poll::Ready(Some(res))
+                        }
+                    },
+                    None => Poll::Ready(None)
+                }
+            },
+            Poll::Pending => Poll::Pending
+        }
+    }
+}
+
+struct SSLError{
+    kind: String,
+    message: String
+}
+
+impl fmt::Display for SSLError{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result{
+        write!(f, "{}", self.message)
+    }
+}
+
+impl fmt::Debug for SSLError{
+    fn fmt(&self, f:&mut fmt::Formatter) -> fmt::Result{
+        write!(f, "Kind: {}, message: {}", self.kind, self.message)
+    }
+}
+
+impl Error for SSLError{
+}
+
+impl From<io::Error> for SSLError{
+    fn from(error: io::Error) -> Self{
+        SSLError{
+            kind: String::from("IO Error"),
+            message: error.to_string()
+        }
+    }
+}
+
+
+fn error(err: String) -> io::Error {
+    io::Error::new(io::ErrorKind::Other, err)
+}
+
+// Load public certificate from file.
+fn load_certs(filename: &str) -> io::Result<Vec<rustls::Certificate>> {
+    // Open certificate file.
+    let certfile = fs::File::open(filename)
+        .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
+    let mut reader = io::BufReader::new(certfile);
+
+    // Load and return certificate.
+    pemfile::certs(&mut reader).map_err(|_| error("failed to load certificate".into()))
+}
+
+// Load private key from file.
+fn load_private_key(filename: &str) -> io::Result<rustls::PrivateKey> {
+    // Open keyfile.
+    let keyfile = fs::File::open(filename)
+        .map_err(|e| error(format!("failed to open {}: {}", filename, e)))?;
+    let mut reader = io::BufReader::new(keyfile);
+
+    // Load and return a single private key.
+    let keys = pemfile::pkcs8_private_keys(&mut reader)
+        .map_err(|_| error("failed to load private key".into()))?;
+    
+    if keys.len() != 1 {
+        return Err(error("expected a single private key".into()));
+    }
+    Ok(keys[0].clone())
 }

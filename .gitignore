@@ -1,3 +1,5 @@
 /target
 /logs
 /data
+/conf/server.crt
+/conf/server.pkey
