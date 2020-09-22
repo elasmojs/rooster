@@ -7,7 +7,7 @@ A small footprint, batteries included application server built with Rust. Gale J
 
 # Announcements
 ## Sep 2020
-- Name change from Rooster JS to Gale JS
+- Added SSL support
 - Linux 64-bit binary added
 - Script API now has a good base of frequently used functions
     - File IO
@@ -77,6 +77,5 @@ The Gale tests repo is [here](https://github.com/elasmojs/gale-test). Check it o
 ## Upcoming
 - Script support
   - Script APIs roadmap
-- SSL support
 - Improved log handling
 - Daemon/Windows Service support
