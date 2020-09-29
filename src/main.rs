@@ -449,7 +449,7 @@ fn main() {
     }else{
         info!("HTTP service is not enabled, check 'net.http.enabled' property in gale.cfg");
     }
-
+    
     if props.net_ssl_enabled{
         std::thread::spawn(||{
             init_ssl();

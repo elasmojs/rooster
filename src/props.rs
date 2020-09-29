@@ -106,7 +106,7 @@ pub fn get_props() -> Props{
 }
 
 pub fn get_http_enabled() -> bool {
-    let http_enabled_prop = PROPS.get("net.http.enabled");
+    let http_enabled_prop = PROPS.get("http.enabled");
     let mut http_enabled = DEFAULT_HTTP_ENABLED;
     if !http_enabled_prop.is_none(){
         http_enabled = match http_enabled_prop.unwrap().trim().parse::<bool>(){
@@ -118,7 +118,7 @@ pub fn get_http_enabled() -> bool {
 }
 
 pub fn get_port() -> i32 {
-    let port_num_prop = PROPS.get("net.port");
+    let port_num_prop = PROPS.get("http.port");
     let mut port_num = DEFAULT_PORT;
     if !port_num_prop.is_none(){
         port_num = match port_num_prop.unwrap().trim().parse::<u16>(){
@@ -130,7 +130,7 @@ pub fn get_port() -> i32 {
 }
 
 pub fn get_ssl_port() -> i32 {
-    let ssl_port_num_prop = PROPS.get("net.ssl.port");
+    let ssl_port_num_prop = PROPS.get("ssl.port");
     let mut ssl_port_num = DEFAULT_SSL_PORT;
     if !ssl_port_num_prop.is_none(){
         ssl_port_num = match ssl_port_num_prop.unwrap().trim().parse::<u16>(){
@@ -142,7 +142,7 @@ pub fn get_ssl_port() -> i32 {
 }
 
 pub fn get_ssl_enabled() -> bool {
-    let ssl_enabled_prop = PROPS.get("net.ssl.enabled");
+    let ssl_enabled_prop = PROPS.get("ssl.enabled");
     let mut ssl_enabled = DEFAULT_SSL_ENABLED;
     if !ssl_enabled_prop.is_none(){
         ssl_enabled = match ssl_enabled_prop.unwrap().trim().parse::<bool>(){
@@ -154,7 +154,7 @@ pub fn get_ssl_enabled() -> bool {
 }
 
 pub fn get_ssl_cert() -> String {
-    let ssl_cert_prop = PROPS.get("net.ssl.cert");
+    let ssl_cert_prop = PROPS.get("ssl.cert");
     let mut ssl_cert = DEFAULT_SSL_CERT;
     if !ssl_cert_prop.is_none(){
         ssl_cert = ssl_cert_prop.unwrap().trim();
@@ -163,7 +163,7 @@ pub fn get_ssl_cert() -> String {
 }
 
 pub fn get_ssl_pkey() -> String {
-    let ssl_pkey_prop = PROPS.get("net.ssl.pkey");
+    let ssl_pkey_prop = PROPS.get("ssl.pkey");
     let mut ssl_pkey = DEFAULT_SSL_PKEY;
     if !ssl_pkey_prop.is_none(){
         ssl_pkey = ssl_pkey_prop.unwrap().trim();
