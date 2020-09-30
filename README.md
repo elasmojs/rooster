@@ -5,7 +5,7 @@ Note: NOT READY FOR PRODUCTION YET
 
 A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB for Windows and ~11 MB for Linux with zero dependencies.
 
-# Downloads
+## Downloads
 The following downloads are available.
 | OS  | Option 1   | Option 2   |
 |---|---|---|
