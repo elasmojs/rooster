@@ -519,7 +519,7 @@ async fn init_ssl(){
 
     
     let addr = format!("0.0.0.0:{}", net_ssl_port);
-
+    
     // Build TLS configuration.
     let tls_cfg_opt = {
         // Load public certificate.
@@ -554,6 +554,11 @@ async fn init_ssl(){
             }                
         }
     };
+    if tls_cfg_opt.is_none(){
+        error!("Could not start the Gale server for SSL");
+        println!("Could not start the Gale server for SSL, please check logs!");
+        return;
+    }
     let tls_cfg = tls_cfg_opt.unwrap();
 
     // Create a TCP listener via tokio.
