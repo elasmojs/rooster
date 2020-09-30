@@ -5,6 +5,14 @@ Note: NOT READY FOR PRODUCTION YET
 
 A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of about ~6 MB for Windows and ~11 MB for Linux with zero dependencies.
 
+# Downloads
+The following downloads are available.
+| OS  | Option 1   | Option 2   |
+|---|---|---|
+| Windows  | [64 bit](./dist/gale-win64.exe)  | [32 bit](./dist/gale-win32.exe)  |
+| Linux  | [64 bit](./dist/gale-linux64)   |   |
+| Mac  | Coming soon   |   |
+
 # Announcements
 ## Sep 2020
 - Added SSL support
@@ -40,14 +48,6 @@ A small footprint, batteries included application server built with Rust. Gale J
   - Examples can be found in the test repository [here](https://github.com/elasmojs/gale-test)
 
 # Getting Started
-## Downloads
-The following downloads are available.
-| OS  | Option 1   | Option 2   |
-|---|---|---|
-| Windows  | [64 bit](./dist/gale-win64.exe)  | [32 bit](./dist/gale-win32.exe)  |
-| Linux  | [64 bit](./dist/gale-linux64)   |   |
-| Mac  | Coming soon   |   |
-
 ## Installation
 - Install folder
   - Your web root folder
