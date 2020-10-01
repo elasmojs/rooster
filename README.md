@@ -9,9 +9,9 @@ A small footprint, batteries included application server built with Rust. Gale J
 The following downloads are available.
 | OS  | Option 1   | Option 2   |
 |---|---|---|
-| Windows  | [64 bit](./dist/gale-win64.exe) 6 MB  | [32 bit](./dist/gale-win32.exe) 5 MB |
-| Linux  | [64 bit](./dist/gale-linux64) 11 MB  |   |
-| Mac  | [64 bit](./dist/gale-mac)  7 MB |   |
+| Windows  | [64 bit](./dist/gale-win64.exe) [6MB]  | [32 bit](./dist/gale-win32.exe) [5MB] |
+| Linux  | [64 bit](./dist/gale-linux64) [11MB]  |   |
+| Mac  | [64 bit](./dist/gale-mac)  [7MB] |   |
 
 # Announcements
 ## Sep 2020
