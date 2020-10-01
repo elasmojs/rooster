@@ -11,7 +11,7 @@ The following downloads are available.
 |---|---|---|
 | Windows  | [64 bit](./dist/gale-win64.exe)  | [32 bit](./dist/gale-win32.exe)  |
 | Linux  | [64 bit](./dist/gale-linux64)   |   |
-| Mac  | Coming soon   |   |
+| Mac  | [64 bit](./dist/gale-mac)  |   |
 
 # Announcements
 ## Sep 2020
