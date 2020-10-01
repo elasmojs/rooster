@@ -3,7 +3,7 @@
 # Gale JS - Application Server
 Note: NOT READY FOR PRODUCTION YET
 
-A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable of very small footprint with zero dependencies.
+A small footprint, batteries included application server built with Rust. Gale JS has out of box Javascript server scripting along with default set of commonly used APIs. It is currently just a single executable with zero dependencies.
 
 ## Downloads
 The following downloads are available.
@@ -14,6 +14,9 @@ The following downloads are available.
 | Mac  | [64 bit](./dist/gale-mac)  [7MB] |   |
 
 # Announcements
+## Oct 2020
+- Mac OS binary added
+
 ## Sep 2020
 - Added SSL support
 - Linux 64-bit binary added
